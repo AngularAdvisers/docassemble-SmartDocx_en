@@ -1,2 +1,1 @@
-# docassemble-SmartDocx_en
-A docassemble extension.
+SmartDocx en (English)

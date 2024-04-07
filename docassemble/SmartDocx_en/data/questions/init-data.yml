@@ -1,0 +1,84 @@
+---
+code: |
+  set_language('sr')
+  
+  sd_client_full_name = ''
+  sd_client_first_name = ''
+  sd_client_last_name = ''
+  
+  sd_client_dob = ''
+  sd_client_place_birth = ''
+  
+  sd_client_iban = ''
+  
+  sd_client_street = ''
+  sd_client_city = ''
+  sd_client_zip = ''
+  
+  sd_lawyer_full_name = ''
+  sd_lawyer_first_name = ''
+  sd_lawyer_last_name = ''
+  
+  sd_lawyer_street = ''
+  sd_lawyer_city = ''
+  sd_lawyer_zip = ''
+  
+  sd_firm_name = ''
+  
+  sd_firm_address = ''
+  sd_firm_email = ''
+  sd_firm_phone = ''
+  
+  sd_matter_date = ''
+  
+  sd_court_name = ''
+  
+  sd_claimant_full_name = ''
+  sd_claimant_city = ''
+  sd_claimant_street = ''
+  sd_claimant_adress_number = ''
+  sd_claimant_id_number = ''
+  sd_lawyer_full_name = ''
+  sd_lawyer_adress = ''
+  sd_defendant_full_name = ''
+  sd_defendant_city = ''
+  sd_defendant_street = ''
+  sd_defendant_adress_number = ''
+  sd_defendant_id_number = ''
+  sd_dispute_value  = ''
+  sd_textbox = ''
+  sd_evidence_no1 = ''
+  sd_evidence_no2 = ''
+  sd_date = ''
+  sd_city = ''
+  sd_court_name = ''
+  sd_price = ''
+  sd_real_estate_info = ''
+  sd_price = ''
+  sd_number = ''
+  sd_damage_amount = ''
+  sd_evidence_no3 = ''
+  sd_defect_info = ''
+  sd_percentage = ''
+  sd_amount = ''
+---
+code: |
+  def upload_to_s3(doc_path, bucket_name, file_name):
+    import boto3
+    import os
+    import docassemble.base.config
+
+    s3_config = docassemble.base.config.daconfig.get('s3', {})
+
+    aws_access_key_id = s3_config.get('access key id', '')
+    aws_secret_access_key = s3_config.get('secret access key', '')
+  
+    try:
+      s3client = boto3.client(
+        's3',
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key
+      )
+      s3client.upload_file(doc_path, bucket_name, file_name)
+    except Exception as e:
+      return f"An error occurred: {str(e)}"
