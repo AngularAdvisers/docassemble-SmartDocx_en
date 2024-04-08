@@ -25,11 +25,11 @@ objects:
 question: |
   What is the client's name?
 fields:
-  - Client's First Name: client.name.first
-  - Client's Middle Name: client.name.middle
+  - First Name: client.name.first
+  - Middle Name: client.name.middle
     required: False
-  - Client's Last Name: client.name.last
-  - Client's Suffix: client.name.suffix
+  - Last Name: client.name.last
+  - Suffix: client.name.suffix
     required: False
     code: name_suffix()
 ---
@@ -58,11 +58,11 @@ objects:
 question: |
   What is the lawyer's name?
 fields:
-  - Lawyer's First Name: lawyer.name.first
-  - Lawyer's Middle Name: lawyer.name.middle
+  - First Name: lawyer.name.first
+  - Middle Name: lawyer.name.middle
     required: False
-  - Lawyer's Last Name: lawyer.name.last
-  - Lawyer's Suffix: lawyer.name.suffix
+  - Last Name: lawyer.name.last
+  - Suffix: lawyer.name.suffix
     required: False
     code: name_suffix()
 ---
@@ -88,13 +88,17 @@ fields:
 question: |
   What is the legal service agreement fee amount?
 fields:
-  - Value: fee_amount
+  - Value: fee
     datatype: currency
 under: |
   ${ client }
   ${ client_address }
+  
   ${ lawyer }
   ${ lawyer_address }
+---
+code: |
+  fee_amount = "{:.2f}".format(fee)
 ---
 question: |
   What date did the client sign the agreement?
