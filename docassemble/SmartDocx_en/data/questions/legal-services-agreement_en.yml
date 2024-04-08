@@ -26,9 +26,13 @@ question: |
   What is the client's name?
 fields:
   - First Name: client.name.first
+    default: |
+      ${ sd_client_first_name }  
   - Middle Name: client.name.middle
     required: False
   - Last Name: client.name.last
+    default: |
+      ${ sd_client_last_name }  
   - Suffix: client.name.suffix
     required: False
     code: name_suffix()
@@ -40,12 +44,18 @@ question: |
   What is your Client's address?
 fields:
   - Address: client_address.address
+    default: |
+      ${ sd_client_street }  
   - Unit: client_address.unit
     required: False
   - City: client_address.city
+    default: |
+      ${ sd_client_city }  
   - State: client_address.state
     required: False
   - Postal Code: client_address.postal_code
+    default: |
+      ${ sd_client_zip }  
     required: False
   - Country: client_address.country
     code: |
@@ -59,9 +69,13 @@ question: |
   What is the lawyer's name?
 fields:
   - First Name: lawyer.name.first
+    default: |
+      ${ sd_lawyer_first_name }  
   - Middle Name: lawyer.name.middle
     required: False
   - Last Name: lawyer.name.last
+    default: |
+      ${ sd_lawyer_last_name }  
   - Suffix: lawyer.name.suffix
     required: False
     code: name_suffix()
@@ -73,12 +87,18 @@ question: |
   What is your Lawyer's address?
 fields:
   - Address: lawyer_address.address
+    default: |
+      ${ sd_lawyer_street }  
   - Unit: lawyer_address.unit
     required: False
   - City: lawyer_address.city
+    default: |
+      ${ sd_lawyer_city }  
   - State: lawyer_address.state
     required: False
   - Postal Code: lawyer_address.postal_code
+    default: |
+      ${ sd_lawyer_zip }  
     required: False
   - Country: lawyer_address.country
     code: |
