@@ -1,3 +1,6 @@
+mandatory: True
+code: |
+  multi_user = True
 ---
 code: |
   set_language('sr')
