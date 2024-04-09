@@ -135,7 +135,7 @@ fields:
     datatype: currency
 under: |
   Client: ${lsa_client_individual}<br>
-  Client Address: ${las_client_address}<br>
+  Client Address: ${lsa_client_address}<br>
   Lawyer: ${lsa_lawyer_individual}<br>
   Lawyer Address: ${lsa_lawyer_address}
 ---
