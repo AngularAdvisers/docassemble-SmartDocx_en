@@ -19,9 +19,25 @@ metadata:
       organization: Andjelkovic Law Firm
   revision_date: 2024-04-05
 ---
+sections:
+  - Client
+  - Client Address
+  - Lawyer
+  - Lawyer Address
+  - Amount
+  - Sign
+  - Signature
+  - Complete
+---
+features:
+  navigation: True
+  progress bar: True
+---
 objects:
   - client: Individual
 ---
+progress: 1
+section: Client
 question: |
   What is the client's name?
 fields:
@@ -41,7 +57,9 @@ objects:
   client_address: Address
 ---
 question: |
-  What is your Client's address?
+progress: 15
+section: Client Address
+  What is the Client's address?
 fields:
   - Address: client_address.address
     default: |
@@ -66,6 +84,8 @@ objects:
   - lawyer: Individual
 ---
 question: |
+progress: 30
+section: Lawyer
   What is the lawyer's name?
 fields:
   - First Name: lawyer.name.first
@@ -84,7 +104,9 @@ objects:
   lawyer_address: Address
 ---
 question: |
-  What is your Lawyer's address?
+progress: 45
+section: Lawyer Address
+  What is the Lawyer's address?
 fields:
   - Address: lawyer_address.address
     default: |
@@ -106,27 +128,33 @@ fields:
     required: False
 ---
 question: |
+progress: 60
+section: Amount
   What is the legal service agreement fee amount?
 fields:
   - Value: fee
     datatype: currency
 under: |
-  ${ client }
-  ${ client_address }
-  
-  ${ lawyer }
-  ${ lawyer_address }
----
+  ${client}<br>
+  ${client_address}<br>
+  ${lawyer}<br>
+  ${lawyer_address}
+--
 code: |
   fee_amount = "{:.2f}".format(fee)
 ---
 question: |
+progress: 75
+section: Sign
   What date did the client sign the agreement?
 fields:
   - Date: date_signed
     datatype: date
 ---
+mandatory: True
 question: Please sign below
+progress: 90
+section: Signature
 subquestion: |
   By signing below, you acknowledge that your answers to the questions
   in this interview were truthful, to the best of your knowledge and you
@@ -136,33 +164,17 @@ under: |
   ${ client }
 ---
 mandatory: True
+progress: 100
+section: Complete
 question: |
-  Your documents are ready. Please print and file!
+  Your documents are ready.
 attachment:
   - name: Leagal Services Agreenment Document
     filename: leagal_services_agreenment_document
-    content: |
-      [BOLDCENTER] Leagal Services Agreenment Document
-      Client: ${ client }
-      Client Address: ${ client_address }
-      Lawyer: ${ lawyer }
-      Lawyer Address: ${ lawyer_address }
-      Legal Service Agreement Fee Amount: ${ fee_amount }
-      Date Client Sign Agreement ${ date_signed }
-      Client Signature: ${ client_signature }    
     docx template file: legal-services-agreement_en.docx
     valid formats:
       - pdf
       - docx
-need: 
-  - client
-  - client_address
-  - lawyer
-  - lawyer_address
-  - fee_amount
-  - date_signed
-  - client_signature
----
 mandatory: True
 code: |
   doc_path = doc_file.path()
