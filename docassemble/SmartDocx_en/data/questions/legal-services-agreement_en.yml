@@ -139,7 +139,7 @@ under: |
   ${client_address}<br>
   ${lawyer}<br>
   ${lawyer_address}
---
+---
 code: |
   fee_amount = "{:.2f}".format(fee)
 ---
