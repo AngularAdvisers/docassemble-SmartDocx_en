@@ -36,6 +36,7 @@ features:
 objects:
   - client: Individual
 ---
+mandatory: True
 progress: 1
 section: Client
 question: |
@@ -56,6 +57,7 @@ fields:
 objects:
   client_address: Address
 ---
+mandatory: True
 progress: 15
 section: Client Address
 question: |
@@ -83,6 +85,7 @@ fields:
 objects:
   - lawyer: Individual
 ---
+mandatory: True
 progress: 30
 section: Lawyer
 question: |
@@ -103,6 +106,7 @@ fields:
 objects:
   lawyer_address: Address
 ---
+mandatory: True
 progress: 45
 section: Lawyer Address
 question: |
@@ -127,6 +131,7 @@ fields:
       countries_list()
     required: False
 ---
+mandatory: True
 progress: 60
 section: Amount
 question: |
