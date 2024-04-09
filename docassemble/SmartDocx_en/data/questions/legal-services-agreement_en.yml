@@ -175,11 +175,8 @@ attachment:
     valid formats:
       - pdf
       - docx
-mandatory: True
 code: |
   doc_path = doc_file.path()
   bucket_name = 'smart-docx-preview'
-
   upload_message = upload_to_s3(doc_path, bucket_name, 'generated/' + fileName)
-
   command('leave', url='https://smart-docx.com/assets/redirect.html?matterId=' + matterId)      
