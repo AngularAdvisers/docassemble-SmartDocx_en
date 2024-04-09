@@ -175,6 +175,10 @@ attachment:
     valid formats:
       - pdf
       - docx
+buttons:
+  - Save and Exit : continue
+---
+mandatory: True
 code: |
   doc_path = doc_file.path()
   bucket_name = 'smart-docx-preview'
