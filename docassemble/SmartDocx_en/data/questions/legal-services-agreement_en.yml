@@ -1,9 +1,9 @@
 ---
 include:
-  - init-data.yml
+  - init-data_en.yml
 ---
 features:
-  css: docassemble.SmartDocx_sr:static/sd.css
+  css: docassemble.SmartDocx_sr:static/sd_en.css
 ---
 metadata:
   title: |
@@ -17,7 +17,7 @@ metadata:
       organization: Andjelkovic Law Firm
     - name: Nemanja Anđelković
       organization: Andjelkovic Law Firm
-  revision_date: 2024-04-05
+  revision_date: 2024-04-09
 ---
 sections:
   - Client's Name
@@ -34,7 +34,10 @@ features:
   progress bar: True
 ---
 objects:
-  - client: Individual
+  - lsa_client_individual: Individual
+  - lsa_client_address: Address
+  - lsa_lawyer_individual: Individual
+  - lsa_lawyer_address: Address
 ---
 mandatory: True
 progress: 1
@@ -42,20 +45,17 @@ section: Client's Name
 question: |
   What is the client's name?
 fields:
-  - First Name: client.name.first
+  - First Name: lsa_client_individual.name.first
     default: |
       ${ sd_client_first_name }  
-  - Middle Name: client.name.middle
+  - Middle Name: lsa_client_individual.name.middle
     required: False
-  - Last Name: client.name.last
+  - Last Name: lsa_client_individual.name.last
     default: |
       ${ sd_client_last_name }  
-  - Suffix: client.name.suffix
+  - Suffix: lsa_client_individual.name.suffix
     required: False
     code: name_suffix()
----
-objects:
-  client_address: Address
 ---
 mandatory: True
 progress: 15
@@ -63,27 +63,24 @@ section: Client's Address
 question: |
   What is the Client's address?
 fields:
-  - Address: client_address.address
+  - Address: lsa_client_address.address
     default: |
       ${ sd_client_street }  
-  - Unit: client_address.unit
+  - Unit: lsa_client_address.unit
     required: False
-  - City: client_address.city
+  - City: lsa_client_address.city
     default: |
-      ${ sd_client_city }  
+      ${ lsa_sd_client_city }  
   - State: client_address.state
     required: False
-  - Postal Code: client_address.postal_code
+  - Postal Code: lsa_client_address.postal_code
     default: |
       ${ sd_client_zip }  
     required: False
-  - Country: client_address.country
+  - Country: lsa_client_address.country
     code: |
       countries_list()
     required: False
----
-objects:
-  - lawyer: Individual
 ---
 mandatory: True
 progress: 30
@@ -91,20 +88,20 @@ section: Lawyer's Name
 question: |
   What is the lawyer's name?
 fields:
-  - First Name: lawyer.name.first
+  - First Name: lsa_lawyer_individual.name.first
     default: |
       ${ sd_lawyer_first_name }  
-  - Middle Name: lawyer.name.middle
+  - Middle Name: lsa_lawyer_individual.name.middle
     required: False
-  - Last Name: lawyer.name.last
+  - Last Name: lsa_lawyer_individual.name.last
     default: |
       ${ sd_lawyer_last_name }  
-  - Suffix: lawyer.name.suffix
+  - Suffix: lsa_lawyer_individual.name.suffix
     required: False
     code: name_suffix()
 ---
 objects:
-  lawyer_address: Address
+  
 ---
 mandatory: True
 progress: 45
@@ -112,21 +109,21 @@ section: Lawyer's Address
 question: |
   What is the Lawyer's address?
 fields:
-  - Address: lawyer_address.address
+  - Address: lsa_lawyer_address.address
     default: |
       ${ sd_lawyer_street }  
-  - Unit: lawyer_address.unit
+  - Unit: lsa_lawyer_address.unit
     required: False
-  - City: lawyer_address.city
+  - City: lsa_lawyer_address.city
     default: |
       ${ sd_lawyer_city }  
-  - State: lawyer_address.state
+  - State: lsa_lawyer_address.state
     required: False
-  - Postal Code: lawyer_address.postal_code
+  - Postal Code: lsa_lawyer_address.postal_code
     default: |
       ${ sd_lawyer_zip }  
     required: False
-  - Country: lawyer_address.country
+  - Country: lsa_lawyer_address.country
     code: |
       countries_list()
     required: False
@@ -137,16 +134,16 @@ section: Fee Amount
 question: |
   What is the legal service agreement fee amount?
 fields:
-  - Value: fee
+  - Value: lsa_fee
     datatype: currency
 under: |
-  Client: ${client}<br>
-  Client Address: ${client_address}<br>
-  Lawyer: ${lawyer}<br>
-  Lawyer Address: ${lawyer_address}
+  Client: ${lsa_client_individual}<br>
+  Client Address: ${las_client_address}<br>
+  Lawyer: ${lsa_lawyer_individual}<br>
+  Lawyer Address: ${lsa_lawyer_address}
 ---
 code: |
-  fee_amount = "{:.2f}".format(fee)
+  lsa_fee_amount = "{:.2f}".format(lsa_fee)
 ---
 mandatory: True
 progress: 75
@@ -154,7 +151,7 @@ section: Signing Date
 question: |
   What date did the client sign the agreement?
 fields:
-  - Date: date_signed
+  - Date: lsa_date_signed
     datatype: date
 ---
 mandatory: True
@@ -165,14 +162,14 @@ subquestion: |
   By signing below, you acknowledge that your answers to the questions
   in this interview were truthful, to the best of your knowledge and you
   agree to the terms of the agreement.
-signature: client_signature
+signature: lsa_client_signature
 under: |
-  Client: ${client}<br>
-  Client Address: ${client_address}<br>
-  Lawyer: ${lawyer}<br>
-  Lawyer Address: ${lawyer_address}<br>
-  Fee Amount: ${fee_amount} <br>
-  Date Signed: ${date_signed}
+  Client: ${lsa_client_address}<br>
+  Client Address: ${lsa_client_address}<br>
+  Lawyer: ${lsa_lawyer_individual}<br>
+  Lawyer Address: ${lsa_lawyer_address}<br>
+  Fee Amount: ${lsa_fee_amount} <br>
+  Date Signed: ${lsa_date_signed}
 ---
 mandatory: True
 progress: 100
@@ -193,5 +190,6 @@ mandatory: True
 code: |
   doc_path = doc_file.path()
   bucket_name = 'smart-docx-preview'
+  fileName = filename
   upload_message = upload_to_s3(doc_path, bucket_name, 'generated/' + fileName)
   command('leave', url='https://smart-docx.com/assets/redirect.html?matterId=' + matterId)      
