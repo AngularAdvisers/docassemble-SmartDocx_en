@@ -158,6 +158,7 @@ under: |
   Lawyer: ${lawyer}<br>
   Lawyer Address: ${lawyer_address}<br>
   Fee Amount: ${fee_amount}
+---
 mandatory: True
 question: Please sign below
 progress: 90
@@ -174,7 +175,7 @@ under: |
   Lawyer Address: ${lawyer_address}<br>
   Fee Amount: ${fee_amount} <br>
   Date Signed: ${date_signed}
-X---
+---
 mandatory: True
 progress: 100
 section: Complete
