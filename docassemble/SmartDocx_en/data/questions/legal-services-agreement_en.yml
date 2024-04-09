@@ -20,14 +20,14 @@ metadata:
   revision_date: 2024-04-05
 ---
 sections:
-  - Client
-  - Client Address
-  - Lawyer
-  - Lawyer Address
-  - Amount
+  - Client's Name
+  - Client's Address
+  - Lawyer's Name
+  - Lawyer's Address
+  - Fee Amount
   - Signing Date
   - Signature
-  - Complete
+  - Completed
 ---
 features:
   navigation: True
@@ -38,7 +38,7 @@ objects:
 ---
 mandatory: True
 progress: 1
-section: Client
+section: Client's Name
 question: |
   What is the client's name?
 fields:
@@ -59,7 +59,7 @@ objects:
 ---
 mandatory: True
 progress: 15
-section: Client Address
+section: Client's Address
 question: |
   What is the Client's address?
 fields:
@@ -87,7 +87,7 @@ objects:
 ---
 mandatory: True
 progress: 30
-section: Lawyer
+section: Lawyer's Name
 question: |
   What is the lawyer's name?
 fields:
@@ -108,7 +108,7 @@ objects:
 ---
 mandatory: True
 progress: 45
-section: Lawyer Address
+section: Lawyer's Address
 question: |
   What is the Lawyer's address?
 fields:
@@ -133,7 +133,7 @@ fields:
 ---
 mandatory: True
 progress: 60
-section: Amount
+section: Fee Amount
 question: |
   What is the legal service agreement fee amount?
 fields:
@@ -176,7 +176,7 @@ under: |
 ---
 mandatory: True
 progress: 100
-section: Complete
+section: Completed
 question: |
   Your documents are ready.
 attachment:
