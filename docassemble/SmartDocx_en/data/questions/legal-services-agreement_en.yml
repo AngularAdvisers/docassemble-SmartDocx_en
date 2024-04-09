@@ -100,9 +100,6 @@ fields:
     required: False
     code: name_suffix()
 ---
-objects:
-  
----
 mandatory: True
 progress: 45
 section: Lawyer's Address
