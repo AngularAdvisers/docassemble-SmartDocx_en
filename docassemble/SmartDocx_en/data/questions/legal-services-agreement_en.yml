@@ -70,7 +70,7 @@ fields:
     required: False
   - City: lsa_client_address.city
     default: |
-      ${ lsa_sd_client_city }  
+      ${ sd_client_city }  
   - State: client_address.state
     required: False
   - Postal Code: lsa_client_address.postal_code
