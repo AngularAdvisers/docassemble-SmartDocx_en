@@ -143,6 +143,7 @@ under: |
 code: |
   fee_amount = "{:.2f}".format(fee)
 ---
+mandatory: True
 progress: 75
 section: Sign
 question: |
@@ -151,6 +152,12 @@ fields:
   - Date: date_signed
     datatype: date
 ---
+under: |
+  Client: ${client}<br>
+  Client Address: ${client_address}<br>
+  Lawyer: ${lawyer}<br>
+  Lawyer Address: ${lawyer_address}<br>
+  Fee Amount: ${fee_amount}
 mandatory: True
 question: Please sign below
 progress: 90
@@ -165,8 +172,9 @@ under: |
   Client Address: ${client_address}<br>
   Lawyer: ${lawyer}<br>
   Lawyer Address: ${lawyer_address}<br>
-  Fee Amount: ${ fee_amount }
----
+  Fee Amount: ${fee_amount} <br>
+  Date Signed: ${date_signed}
+X---
 mandatory: True
 progress: 100
 section: Complete
