@@ -56,9 +56,9 @@ fields:
 objects:
   client_address: Address
 ---
-question: |
 progress: 15
 section: Client Address
+question: |
   What is the Client's address?
 fields:
   - Address: client_address.address
@@ -83,9 +83,9 @@ fields:
 objects:
   - lawyer: Individual
 ---
-question: |
 progress: 30
 section: Lawyer
+question: |
   What is the lawyer's name?
 fields:
   - First Name: lawyer.name.first
@@ -103,9 +103,9 @@ fields:
 objects:
   lawyer_address: Address
 ---
-question: |
 progress: 45
 section: Lawyer Address
+question: |
   What is the Lawyer's address?
 fields:
   - Address: lawyer_address.address
@@ -127,25 +127,25 @@ fields:
       countries_list()
     required: False
 ---
-question: |
 progress: 60
 section: Amount
+question: |
   What is the legal service agreement fee amount?
 fields:
   - Value: fee
     datatype: currency
 under: |
-  ${client}<br>
-  ${client_address}<br>
-  ${lawyer}<br>
-  ${lawyer_address}
+  Client: ${client}<br>
+  Client Address: ${client_address}<br>
+  Lawyer: ${lawyer}<br>
+  Lawyer Address: ${lawyer_address}
 ---
 code: |
   fee_amount = "{:.2f}".format(fee)
 ---
-question: |
 progress: 75
 section: Sign
+question: |
   What date did the client sign the agreement?
 fields:
   - Date: date_signed
@@ -161,7 +161,11 @@ subquestion: |
   agree to the terms of the agreement.
 signature: client_signature
 under: |
-  ${ client }
+  Client: ${client}<br>
+  Client Address: ${client_address}<br>
+  Lawyer: ${lawyer}<br>
+  Lawyer Address: ${lawyer_address}<br>
+  Fee Amount: ${ fee_amount }
 ---
 mandatory: True
 progress: 100
