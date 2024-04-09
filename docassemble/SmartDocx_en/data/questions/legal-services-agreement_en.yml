@@ -152,13 +152,6 @@ fields:
   - Date: date_signed
     datatype: date
 ---
-under: |
-  Client: ${client}<br>
-  Client Address: ${client_address}<br>
-  Lawyer: ${lawyer}<br>
-  Lawyer Address: ${lawyer_address}<br>
-  Fee Amount: ${fee_amount}
----
 mandatory: True
 question: Please sign below
 progress: 90
