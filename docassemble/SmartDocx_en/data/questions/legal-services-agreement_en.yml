@@ -40,6 +40,10 @@ objects:
   - lsa_lawyer_address: Address
 ---
 mandatory: True
+code: |
+  set_language('en')
+---
+mandatory: True
 progress: 1
 section: Client's Name
 question: |
@@ -188,6 +192,10 @@ mandatory: True
 code: |
   doc_path = doc_file.path()
   bucket_name = 'smart-docx-preview'
+  
+  matterId = matter_id
+  workItemId = work_item_id
   fileName = filename
+   
   upload_message = upload_to_s3(doc_path, bucket_name, 'generated/' + fileName)
-  command('leave', url='https://smart-docx.com/assets/redirect.html?matterId=' + matterId)      
+  command('leave', url='https://smart-docx.com/assets/redirect.html?matterId=' + matterId)
