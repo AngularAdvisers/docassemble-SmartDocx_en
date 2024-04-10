@@ -177,6 +177,7 @@ attachment:
   - name: Leagal Services Agreenment Document
     filename: leagal_services_agreenment_document
     docx template file: legal-services-agreement_en.docx
+    variable name: doc_file
     valid formats:
       - pdf
       - docx
