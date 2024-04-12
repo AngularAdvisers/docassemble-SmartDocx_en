@@ -183,7 +183,6 @@ attachment:
     docx template file: legal-services-agreement_en.docx
     variable name: doc_file
     valid formats:
-      - pdf
       - docx
 buttons:
   - Save and Exit : continue
