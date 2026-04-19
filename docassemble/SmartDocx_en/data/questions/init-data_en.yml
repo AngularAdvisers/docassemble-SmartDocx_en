@@ -2,6 +2,24 @@ mandatory: True
 code: |
   multi_user = True
 ---
+# Inject a tiny JS helper on every screen so the per-interview final
+# question just needs a <button onclick="smartDocxSaveAndExit(this)">.
+# Using `default screen parts` with `post` puts the <script> below the
+# question body so the function is defined before any button calls it.
+default screen parts:
+  post: |
+    <script>
+      function smartDocxSaveAndExit(btn) {
+        if (btn) {
+          btn.disabled = true;
+          btn.innerText = 'Saving...';
+        }
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'docassemble:complete' }, '*');
+        }
+      }
+    </script>
+---
 code: |
   set_language('en')
   
