@@ -75,7 +75,7 @@ fields:
   - City: lsa_client_address.city
     default: |
       ${ sd_client_city }  
-  - State: client_address.state
+  - State: lsa_client_address.state
     required: False
   - Postal Code: lsa_client_address.postal_code
     default: |
@@ -176,25 +176,26 @@ mandatory: True
 progress: 100
 section: Completed
 question: |
-  Your documents are ready.
+  Your document is ready.
+subquestion: |
+  Smart-Docx is attaching the generated document to the matter. You'll be
+  taken to a preview in a moment — no action needed.
+# When this screen renders, the attachment block below has already populated
+# `doc_file` in the session, which means the Smart-Docx backend can now
+# fetch the assembled DOCX via /api/session + /api/file. We notify the
+# parent iframe so it calls the attachGeneratedDocument mutation and opens
+# the preview dialog. The old S3 upload + `command('leave', ...)` flow has
+# been removed — Smart-Docx persists via StorageService instead.
+script: |
+  <script>
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'docassemble:complete' }, '*');
+    }
+  </script>
 attachment:
-  - name: Leagal Services Agreenment Document
-    filename: leagal_services_agreenment_document
+  - name: Legal Services Agreement
+    filename: legal_services_agreement_document
     docx template file: legal-services-agreement_en.docx
     variable name: doc_file
     valid formats:
       - docx
-buttons:
-  - Save and Exit : continue
----
-mandatory: True
-code: |
-  doc_path = doc_file.path()
-  bucket_name = 'smart-docx-preview'
-  
-  matterId = matter_id
-  workItemId = work_item_id
-  fileName = filename
-   
-  upload_message = upload_to_s3(doc_path, bucket_name, 'generated/' + fileName)
-  command('leave', url='https://smart-docx.com/assets/redirect.html?matterId=' + matterId)
