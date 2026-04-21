@@ -20,9 +20,25 @@ default screen parts:
       }
     </script>
 ---
+# Expose the interview's `metadata: title:` as a plain variable so the
+# completion screens can render it with `${ doc_title }` instead of
+# hard-coding the document name per-file. Each interview YAML sets its
+# own `title:` in its metadata block; this helper reads whichever one
+# is active for the current interview.
+#
+# `all_variables(special='metadata')` is Docassemble's supported way to
+# read the aggregated metadata dict at runtime. The title uses a `|`
+# block scalar in every SmartDocx interview, so `.strip()` removes the
+# trailing newline the YAML parser leaves on literal-style scalars.
+# Falls back to empty string if metadata is missing (shouldn't happen,
+# but keeps the final screen from crashing if an interview ever omits
+# its `title:`).
+code: |
+  doc_title = all_variables(special='metadata').get('title', '').strip()
+---
 code: |
   set_language('en')
-  
+
   sd_client_full_name = ''
   sd_client_first_name = ''
   sd_client_last_name = ''

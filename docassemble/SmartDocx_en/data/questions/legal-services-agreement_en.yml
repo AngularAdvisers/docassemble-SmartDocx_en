@@ -176,11 +176,18 @@ mandatory: True
 progress: 100
 section: Completed
 question: |
-  Your document is ready.
+  The following document has been created.
 subquestion: |
-  Review the generated document below. Use **Save as PDF** or
-  **Save as DOCX** to download a copy, or click **Save and Exit** to
-  attach the final document to the matter and return to Smart-Docx.
+  <div style="margin: 1rem 0;">
+    <button type="button" class="btn btn-primary"
+            style="border-radius: 20px; padding: 0.5rem 1.5rem;
+                   color: #fff;"
+            onclick="smartDocxSaveAndExit(this)">
+      Save and Exit
+    </button>
+  </div>
+
+  <h2 style="margin-top: 1.5rem;">${ doc_title }</h2>
 
   <div style="border: 1px solid rgba(0,0,0,0.1); border-radius: 6px;
               overflow: hidden; margin: 1rem 0; height: 70vh;
@@ -188,24 +195,18 @@ subquestion: |
     ${ doc_file.pdf.show(width='100%') }
   </div>
 
-  <div class="text-center" style="margin: 1.5rem 0;">
-    <a href="${ doc_file.pdf.url_for(attachment=True) }"
-       class="btn btn-secondary"
-       style="margin-right: 0.5rem;">
-      <i class="fas fa-file-pdf"></i> Save as PDF
+  <p style="margin-top: 1rem;">
+    <a href="${ doc_file.docx.url_for(attachment=True) }">
+      <i class="fas fa-file-word"></i> DOCX
     </a>
-    <a href="${ doc_file.docx.url_for(attachment=True) }"
-       class="btn btn-secondary">
-      <i class="fas fa-file-word"></i> Save as DOCX
+    (for editing; requires Microsoft Word or compatible application)
+  </p>
+  <p>
+    <a href="${ doc_file.pdf.url_for(attachment=True) }">
+      <i class="fas fa-file-pdf"></i> PDF
     </a>
-  </div>
-
-  <div class="text-center" style="margin-top: 1.5rem;">
-    <button type="button" class="btn btn-primary btn-lg"
-            onclick="smartDocxSaveAndExit(this)">
-      Save and Exit
-    </button>
-  </div>
+    (for viewing; requires Adobe PDF viewer or compatible application)
+  </p>
 # `smartDocxSaveAndExit` is defined globally in init-data_en.yml so every
 # interview can reuse the same Save-and-Exit handler. postMessage used to
 # fire automatically when this screen rendered, but that (a) skipped past
