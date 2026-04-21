@@ -178,9 +178,9 @@ section: Completed
 question: |
   Your document is ready.
 subquestion: |
-  Review the generated document below. Use **Download** to save a copy
-  locally, or click **Save and Exit** to attach the final document to
-  the matter and return to Smart-Docx.
+  Review the generated document below. Use **Save as PDF** or
+  **Save as DOCX** to download a copy, or click **Save and Exit** to
+  attach the final document to the matter and return to Smart-Docx.
 
   <div style="border: 1px solid rgba(0,0,0,0.1); border-radius: 6px;
               overflow: hidden; margin: 1rem 0; height: 70vh;
@@ -188,7 +188,17 @@ subquestion: |
     ${ doc_file.pdf.show(width='100%') }
   </div>
 
-  ${ doc_file }
+  <div class="text-center" style="margin: 1.5rem 0;">
+    <a href="${ doc_file.pdf.url_for(attachment=True) }"
+       class="btn btn-secondary"
+       style="margin-right: 0.5rem;">
+      <i class="fas fa-file-pdf"></i> Save as PDF
+    </a>
+    <a href="${ doc_file.docx.url_for(attachment=True) }"
+       class="btn btn-secondary">
+      <i class="fas fa-file-word"></i> Save as DOCX
+    </a>
+  </div>
 
   <div class="text-center" style="margin-top: 1.5rem;">
     <button type="button" class="btn btn-primary btn-lg"
