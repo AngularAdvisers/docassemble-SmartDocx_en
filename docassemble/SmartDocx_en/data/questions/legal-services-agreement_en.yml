@@ -203,6 +203,26 @@ subquestion: |
 # page and (b) raced docassemble's own attachment generation, which caused
 # the Smart-Docx preview dialog to open before the assembled DOCX was
 # readable via /api/file — the root cause of the "no preview" bug.
+---
+# The attachment MUST be in its own top-level block (separated by ---)
+# rather than folded into the mandatory:True completion question above.
+#
+# If it lives on the completion question, the YAML parses into one mapping
+# where `subquestion:` references `${ doc_file.pdf.show(...) }` and
+# `attachment: ... variable name: doc_file` tries to assemble that same
+# variable. Docassemble marks the question "in progress" while rendering
+# its subquestion, so when the resolver follows the doc_file reference
+# back to the same block, it sees the block is already on the stack and
+# aborts with:
+#
+#    Infinite loop: doc_file already looked for, where stack is set()
+#
+# (Empty stack because the cycle closes at the outermost resolution.)
+#
+# As a standalone block, the attachment becomes an on-demand assembler:
+# DA generates doc_file the first time anything references it, caches the
+# DAFileList, and the completion question just consumes the already-built
+# variable. No cycle, preview renders, Save and Exit works.
 attachment:
   - name: Legal Services Agreement
     filename: legal_services_agreement_document
