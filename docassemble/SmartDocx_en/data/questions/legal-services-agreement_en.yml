@@ -189,10 +189,25 @@ subquestion: |
 
   <h2 style="margin-top: 1.5rem;">${ doc_title }</h2>
 
+  <!--
+    Iframe instead of `${ doc_file.pdf.show(...) }` — DA's `.show` renders
+    only the PDF's first page as a thumbnail image, which is useless for
+    multi-page documents (Legal Services Agreement, Lifetime Support
+    Agreement, etc.). Loading the PDF in an iframe lets the browser's
+    native viewer handle pagination, zoom, and search.
+    URL hash params: keep the toolbar (page nav + zoom), hide the side
+    panel for a cleaner embed, fit width by default.
+  -->
   <div style="border: 1px solid rgba(0,0,0,0.1); border-radius: 6px;
               overflow: hidden; margin: 1rem 0; height: 70vh;
               background: #fafafa;">
-    ${ doc_file.pdf.show(width='100%') }
+    <iframe
+      src="${ doc_file.pdf.url_for() }#toolbar=1&navpanes=0&view=FitH"
+      width="100%"
+      height="100%"
+      style="border: 0;"
+      title="Document preview">
+    </iframe>
   </div>
 
   <p style="margin-top: 1rem;">
