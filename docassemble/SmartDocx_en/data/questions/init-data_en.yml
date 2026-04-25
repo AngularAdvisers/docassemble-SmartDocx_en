@@ -15,7 +15,17 @@ default screen parts:
           btn.innerText = 'Saving...';
         }
         if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'docassemble:complete' }, '*');
+          // Read the current session id from the iframe's URL, not from
+          // whatever Smart-Docx remembered when it opened us. DA can mint
+          // a fresh session mid-flight (e.g. when the original is GC'd or
+          // its YAML changed), and the parent must use *that* id for the
+          // attach-to-matter mutation — otherwise the backend hits 400 on
+          // GET /api/session?session=<dead id>.
+          var sessionId = new URLSearchParams(window.location.search).get('session') || '';
+          window.parent.postMessage(
+            { type: 'docassemble:complete', sessionId: sessionId },
+            '*'
+          );
         }
       }
     </script>
