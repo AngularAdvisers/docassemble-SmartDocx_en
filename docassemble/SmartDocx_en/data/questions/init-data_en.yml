@@ -167,50 +167,50 @@ default screen parts:
          the question pane keeps its proportional size. */
       div.danavdiv.offset-xl-1 { margin-left: 0 !important; }
 
-      /* Each section link — color + room on the right for the
-         collapse icon (group rows) or green ✓ (subsections). No
-         left chevron — that left padding caused the duplicated
-         "twisties" the user saw. */
+      /* Section row layout — fixed left padding leaves room for
+         [twisty (~16px wide)] [status check (~16px)] = 38px on the
+         left of every row. Order is twisty → check → text from left
+         to right, so when a group is collapsed the user can still
+         see its completion state via the check beside the twisty. */
       a.danavlink {
         color: var(--sd-text);
-        padding-right: 30px !important;
+        padding-left: 42px !important;
+        padding-right: 12px !important;
         position: relative;
       }
       a.danavlink:hover { color: var(--sd-primary); }
 
-      /* GROUP labels — non-clickable. NO ::before chevron (was
-         confusing the user with multiple icons). The collapse/expand
-         icon is injected by JS as a clickable span on the RIGHT,
-         outside the link's own click target. */
+      /* GROUP labels — non-clickable text; the twisty handles
+         collapse via its own click target (injected by JS). */
       a.danavlink:not(.daclickable) {
         font-weight: 700;
         cursor: default;
       }
 
-      /* Wrapper that holds both the group's <a> and its collapse
-         button, so the button can sit visually outside the link's
-         click area. Injected by JS. */
+      /* Group row wrapper — relative-positioned so we can absolutely-
+         position both the twisty and the eventual ::after status check. */
       .sd-group-row {
         position: relative;
-        display: flex;
-        align-items: stretch;
       }
-      .sd-group-row > a.danavlink { flex: 1; }
+      /* Twisty — sits at the LEFT of the group row, before the check
+         and text. Default downward arrow (▼) for expanded; flips to
+         right (▶) when JS toggles `[data-sd-collapsed="1"]`. */
       .sd-group-collapse-btn {
         position: absolute;
-        right: 6px; top: 50%;
+        left: 6px; top: 50%;
         transform: translateY(-50%);
-        width: 22px; height: 22px;
+        width: 18px; height: 18px;
         display: inline-flex;
         align-items: center; justify-content: center;
         background: transparent;
         border: 0;
         color: var(--sd-muted);
         cursor: pointer;
-        font-size: 14px;
+        font-size: 9px;
         line-height: 1;
         border-radius: 3px;
         padding: 0;
+        z-index: 2;
       }
       .sd-group-collapse-btn:hover {
         background: rgba(0, 87, 139, 0.10);
@@ -245,28 +245,30 @@ default screen parts:
         border-left: 3px solid var(--sd-primary);
       }
 
-      /* Green ✓ check after the link text on visited subsections. */
+      /* Status check — appears on EVERY section that has a status
+         (subsections marked visited, groups when ALL children
+         visited). Sits at left: 24px, just right of the twisty.
+         User asked for the check to remain visible even when a group
+         is collapsed — the check on the group row IS that aggregate
+         indicator. */
       a.danavlink[data-sd-status="complete"]::after {
         content: "✓";
-        position: absolute; left: 14px; top: 50%;
+        position: absolute; left: 24px; top: 50%;
         transform: translateY(-50%);
-        width: 14px; height: 14px; border-radius: 50%;
+        width: 16px; height: 16px; border-radius: 50%;
         background: var(--sd-tick); color: #ffffff;
         font-size: 10px; font-weight: 700;
         display: inline-flex; align-items: center; justify-content: center;
         line-height: 1;
       }
-      /* Hollow circle for the active leaf (visually distinct from completed). */
       a.danavlink[data-sd-status="active"]::after {
         content: "";
-        position: absolute; left: 16px; top: 50%;
+        position: absolute; left: 26px; top: 50%;
         transform: translateY(-50%);
-        width: 10px; height: 10px; border-radius: 50%;
+        width: 12px; height: 12px; border-radius: 50%;
         background: var(--sd-pane-bg);
         border: 2px solid var(--sd-primary);
       }
-      /* Don't draw the leaf check on group labels (they have a chevron). */
-      a.danavlink:not(.daclickable)[data-sd-status]::after { display: none; }
       /* Section title bar — first child of #daquestion, extended to
          the pane's full width via negative margins so it bleeds to
          the pane edges. Padding/font match the outline header so
@@ -616,16 +618,36 @@ default screen parts:
             btn.type = 'button';
             btn.className = 'sd-group-collapse-btn';
             btn.setAttribute('aria-label', 'Toggle ' + (groupLink.textContent || '').trim());
-            btn.textContent = collapsed ? '＋' : '−';
+            btn.textContent = collapsed ? '▶' : '▼';
             btn.addEventListener('click', function (ev) {
               ev.preventDefault();
               ev.stopPropagation();
               var nowCollapsed = !nested.classList.contains('sd-collapsed');
               nested.classList.toggle('sd-collapsed', nowCollapsed);
-              btn.textContent = nowCollapsed ? '＋' : '−';
+              btn.textContent = nowCollapsed ? '▶' : '▼';
               try { sessionStorage.setItem(collapseKey, nowCollapsed ? '1' : '0'); } catch (e) {}
             });
             row.appendChild(btn);
+
+            // GROUP STATUS — when all leaves inside this group are
+            // visited, mark the group itself with `data-sd-status=
+            // "complete"` so the green ✓ shows up on the group row.
+            // That way the user can see the group's overall status
+            // even when it's collapsed and the children are hidden.
+            var leaves = nested.querySelectorAll('a.danavlink.daclickable');
+            var allVisited = leaves.length > 0;
+            var anyActive = false;
+            leaves.forEach(function (leaf) {
+              if (leaf.classList.contains('active')) anyActive = true;
+              if (!visited[keyOf(leaf)]) allVisited = false;
+            });
+            if (anyActive) {
+              groupLink.dataset.sdStatus = 'active';
+            } else if (allVisited) {
+              groupLink.dataset.sdStatus = 'complete';
+            } else {
+              groupLink.removeAttribute('data-sd-status');
+            }
           });
 
           // 3. COMPLETION STATUS on every leaf link. Group labels
