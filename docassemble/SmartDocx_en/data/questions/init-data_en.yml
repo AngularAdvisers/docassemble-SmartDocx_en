@@ -878,8 +878,20 @@ default screen parts:
             clear.className = 'sd-btn sd-btn--clear';
             clear.innerHTML = '<span class="sd-btn-glyph">✕</span> Clear';
             clear.addEventListener('click', function () {
+              // Prefer SignaturePad's native .clear() — wipes the
+              // strokes but leaves the resized canvas in place. DA's
+              // own .dasigclear handler calls daNewCanvas(), which
+              // REPLACES the <canvas> element with a fresh one at
+              // DA's default (small) size, undoing our resize and
+              // making it look like the pad disappeared.
+              if (window.daSignaturePad && typeof window.daSignaturePad.clear === 'function') {
+                window.daSignaturePad.clear();
+                return;
+              }
+              // Fallback: trigger DA's clear, then re-expand.
               var sigClear = document.querySelector('.dasigclear');
               if (sigClear) sigClear.click();
+              setTimeout(expandSignatureCanvas, 30);
             });
             right.appendChild(clear);
           } else {
