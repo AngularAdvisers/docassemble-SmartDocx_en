@@ -730,12 +730,40 @@ default screen parts:
             }
           });
 
-          // 3. COMPLETION STATUS on EVERY nav link (including the
-          //    non-clickable "Completed" label and the group rows
-          //    that don't have subsections). Groups WITH subsections
-          //    get their status overwritten in step 2b below using
-          //    aggregate children-visited logic.
+          // 3. COMPLETION STATUS on every leaf-style nav link.
+          //    SKIP group rows that have a `.danavnested` sibling —
+          //    step 2b above already set their status using aggregate
+          //    children-visited logic, and the group key itself is
+          //    never in `visited` (no event fires for the label),
+          //    so running the visited-based check here would clear
+          //    the green ✓ that step 2b just put on the parent.
+          //    Standalone non-clickable labels like "Completed"
+          //    (no nested children) still flow through this loop
+          //    and pick up their status from `visited[key]`.
           rail.querySelectorAll('a.danavlink').forEach(function (link) {
+            // Step 2b wraps group links in `.sd-group-row`, so the
+            // `.danavnested` block is a sibling of THAT wrapper, not
+            // of the <a> itself. Walk forward from the wrapper if
+            // present, otherwise from the link directly.
+            var anchor = (link.parentElement &&
+                          link.parentElement.classList.contains('sd-group-row'))
+              ? link.parentElement
+              : link;
+            var sib = anchor.nextElementSibling;
+            var isGroup = false;
+            while (sib) {
+              if (sib.classList && sib.classList.contains('danavnested')) {
+                isGroup = true;
+                break;
+              }
+              if (sib.tagName === 'A' ||
+                  (sib.classList && sib.classList.contains('sd-group-row'))) {
+                break;
+              }
+              sib = sib.nextElementSibling;
+            }
+            if (isGroup) return;
+
             var key = keyOf(link);
             if (link.classList.contains('active')) {
               link.dataset.sdStatus = 'active';
