@@ -407,9 +407,22 @@ default screen parts:
         .sd-btn { padding: 6px 14px; font-size: 12px; }
         body { padding-bottom: 64px !important; }
       }
+      /* Question text — DA emits `<h1 id="daMainQuestion" class="h3">`
+         which Bootstrap renders at ~28px. User asked for a smaller
+         question — bring it down to 18px. */
+      #daMainQuestion, #daquestion h1#daMainQuestion {
+        font-size: 18px !important;
+        font-weight: 600 !important;
+        line-height: 1.4 !important;
+        margin: 0 0 16px 0 !important;
+      }
+
+      /* Desktop tweaks — kept minimal so we don't clobber the base
+         header rules. (Earlier this @media block reset
+         .sd-section-title-bar to 14px and .sd-outline-header to 12px,
+         which is why the user kept seeing nothing change despite
+         updates to the base size.) */
       @media (min-width: 992px) {
-        .sd-outline-header { padding: 10px 14px; font-size: 12px; }
-        .sd-section-title-bar { padding: 10px 20px; margin: 0 0 12px 0; font-size: 14px; }
         #daquestion .form-control,
         #daquestion input[type="text"],
         #daquestion input[type="email"],
