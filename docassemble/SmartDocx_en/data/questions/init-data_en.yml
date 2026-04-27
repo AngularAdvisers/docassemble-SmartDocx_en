@@ -70,21 +70,21 @@ default screen parts:
       }
       .sd-outline-title { flex: 1; }
       div.danavdiv {
-        margin-top: 0; padding: 0 0 12px 0;
+        margin: 0; padding: 0 0 8px 0;
         background: var(--sd-rail-bg);
-        border-right: 2px solid var(--sd-border);
+        border-right: 1px solid var(--sd-border);
         min-height: 100vh;
       }
       div.danavdiv.sd-rail-collapsed div.dasections,
       div.danavdiv.sd-rail-collapsed > *:not(.sd-outline-header) {
         display: none;
       }
-      div.dasections { line-height: 1.4; padding-top: 8px; }
+      div.dasections { line-height: 1.35; padding: 4px 0 0 0; }
       div.dasections .btn {
-        display: flex; align-items: center; gap: 10px;
+        display: flex; align-items: center; gap: 8px;
         width: 100%; text-align: left;
-        font-size: 14px; font-weight: 500; color: var(--sd-text);
-        padding: 9px 16px 9px 36px;
+        font-size: 13px; font-weight: 500; color: var(--sd-text);
+        padding: 6px 14px 6px 30px;
         border-radius: 0; background: transparent;
         border: none; border-left: 3px solid transparent;
         position: relative; white-space: normal;
@@ -96,20 +96,19 @@ default screen parts:
       [data-bs-theme="dark"] div.dasections .btn:hover {
         background: rgba(107, 168, 221, 0.08);
       }
+      /* Group rows: bold label + decorative chevron pointing DOWN
+         (groups never collapse anymore, the chevron just signals
+         "this is a group with sub-items"). No cursor pointer; not
+         clickable. */
       div.dasections .btn[data-sd-group] {
-        font-weight: 600; cursor: pointer; padding-left: 30px;
+        font-weight: 600; cursor: default; padding-left: 26px;
       }
       div.dasections .btn[data-sd-group]::before {
-        content: ""; position: absolute; left: 12px; top: 50%;
-        width: 0; height: 0; margin-top: -4px;
-        border-style: solid; border-width: 4px 0 4px 6px;
-        border-color: transparent transparent transparent var(--sd-muted);
-        transition: transform 0.15s ease; transform-origin: 2px 50%;
+        content: ""; position: absolute; left: 10px; top: 50%;
+        width: 0; height: 0; margin-top: -3px;
+        border-style: solid; border-width: 5px 4px 0 4px;
+        border-color: var(--sd-muted) transparent transparent transparent;
       }
-      div.dasections .btn[data-sd-group][data-sd-collapsed="0"]::before {
-        transform: rotate(90deg);
-      }
-      div.dasections .dainlineinside[data-sd-collapsed="1"] { display: none; }
       div.dasections .btn[data-sd-status="complete"]::after,
       div.dasections .btn[data-sd-status="active"]::after {
         content: ""; position: absolute; left: 12px; top: 50%;
@@ -179,7 +178,14 @@ default screen parts:
         font-weight: 500; color: var(--sd-text);
         margin-bottom: 6px; font-size: 13px;
       }
+      /* Hide DA's native Continue / Back. Actual IDs are
+         `#da-continue-button` and `#dabackToQuestion` — earlier
+         selectors `button[name="_continue"]` / `#daQuestionSubmit`
+         were wrong (left over from older DA versions) which was why
+         our bar never replaced the visible Continue. */
       .danavlinkbuttons,
+      #da-continue-button,
+      #dabackToQuestion,
       button[name="_continue"],
       button[name="_back_button"],
       #daQuestionSubmit,
@@ -395,10 +401,12 @@ default screen parts:
           }
 
           // 2. GROUPS — any .btn that is followed by a .dainlineinside
-          //    container is a group header. Tag it, give it a chevron,
-          //    bind a toggle.
+          //    container is a group header. Tag it with [data-sd-group]
+          //    so the CSS draws a decorative chevron. Children stay
+          //    always-visible (no toggle) per the latest UX request:
+          //    user wants groups to appear as static structural labels,
+          //    not click-to-collapse interactions.
           rail.querySelectorAll('.dainlineinside').forEach(function (children) {
-            // Walk back to find the preceding .btn (DA wraps inconsistently).
             var sib = children.previousElementSibling;
             var groupBtn = null;
             while (sib && !groupBtn) {
@@ -410,42 +418,12 @@ default screen parts:
               if (!groupBtn) sib = sib.previousElementSibling;
             }
             if (!groupBtn) return;
-
             groupBtn.dataset.sdGroup = '1';
-            var groupKey = keyOf(groupBtn);
-            var collapseKey = INTERVIEW_KEY + ':collapsed:' + groupKey;
-            var collapsed = sessionStorage.getItem(collapseKey) === '1';
-            children.dataset.sdCollapsed = collapsed ? '1' : '0';
-            groupBtn.dataset.sdCollapsed = collapsed ? '1' : '0';
-
-            if (!groupBtn.dataset.sdGroupBound) {
-              groupBtn.dataset.sdGroupBound = '1';
-              groupBtn.addEventListener('click', function (ev) {
-                ev.preventDefault();
-                ev.stopPropagation();
-                var nowCollapsed = children.dataset.sdCollapsed !== '1';
-                children.dataset.sdCollapsed = nowCollapsed ? '1' : '0';
-                groupBtn.dataset.sdCollapsed = nowCollapsed ? '1' : '0';
-                try { sessionStorage.setItem(collapseKey, nowCollapsed ? '1' : '0'); }
-                catch (e) {}
-              }, true);
-            }
+            // Groups are non-clickable: the keyword is just a display
+            // label, so let DA's default href (if any) navigate or
+            // fall through to no-op. We DO NOT bind a toggle handler;
+            // children are always visible.
           });
-
-          // Auto-expand the group containing the active section.
-          if (activeBtn) {
-            var ancestor = activeBtn.closest('.dainlineinside');
-            if (ancestor) {
-              ancestor.dataset.sdCollapsed = '0';
-              var sib2 = ancestor.previousElementSibling;
-              while (sib2) {
-                var g = sib2.matches && sib2.matches('.btn') ? sib2
-                      : (sib2.querySelector ? sib2.querySelector('.btn') : null);
-                if (g) { g.dataset.sdCollapsed = '0'; break; }
-                sib2 = sib2.previousElementSibling;
-              }
-            }
-          }
 
           // 3. COMPLETION STATUS on every leaf button.
           rail.querySelectorAll('.btn').forEach(function (btn) {
@@ -507,14 +485,20 @@ default screen parts:
           bar.className = 'sd-bottom-bar';
           if (isFinal) bar.classList.add('sd-bottom-bar--final');
 
+          // DA's actual button IDs (verified by inspecting the
+          // rendered HTML response): `#da-continue-button` for next,
+          // `#dabackToQuestion` for back. Older selectors kept as
+          // fallbacks for forward/backward compat with other DA
+          // versions, but the IDs above are what 2026 ships.
+          var CONT_SEL = '#da-continue-button, button[name="_continue"], #daQuestionSubmit, button[type="submit"]';
+          var BACK_SEL = '#dabackToQuestion, button[name="_back_button"], a.danavlinkprevious, #daPageBack';
+
           var prev = document.createElement('button');
           prev.type = 'button';
           prev.className = 'sd-btn sd-btn--prev';
           prev.innerHTML = '<span class="sd-btn-glyph">◀</span> Previous';
           prev.addEventListener('click', function () {
-            var back = document.querySelector(
-              'button[name="_back_button"], a.danavlinkprevious, #daPageBack'
-            );
+            var back = document.querySelector(BACK_SEL);
             if (back) back.click();
             else if (window.history && window.history.length > 1) window.history.back();
           });
@@ -524,9 +508,7 @@ default screen parts:
           next.className = 'sd-btn sd-btn--next';
           next.innerHTML = 'Next <span class="sd-btn-glyph">▶</span>';
           next.addEventListener('click', function () {
-            var cont = document.querySelector(
-              'button[name="_continue"], #daQuestionSubmit, button[type="submit"]'
-            );
+            var cont = document.querySelector(CONT_SEL);
             if (cont) cont.click();
           });
 
@@ -535,9 +517,7 @@ default screen parts:
           finish.className = 'sd-btn sd-btn--finish';
           finish.innerHTML = '<span class="sd-btn-glyph">✓</span> Finish';
           finish.addEventListener('click', function () {
-            var cont = document.querySelector(
-              'button[name="_continue"], #daQuestionSubmit, button[type="submit"]'
-            );
+            var cont = document.querySelector(CONT_SEL);
             if (cont) cont.click();
           });
 
@@ -557,7 +537,9 @@ default screen parts:
 
           // Only inject the action bar on screens that have a Continue
           // button — skips DA's standalone signature/playground pages.
-          if (document.querySelector('button[name="_continue"], #daQuestionSubmit')) {
+          // Use the same selector list as the bar itself so this gate
+          // matches what we'll actually drive via .click().
+          if (document.querySelector('#da-continue-button, button[name="_continue"], #daQuestionSubmit, button[type="submit"]')) {
             injectBottomBar(isFinal);
           }
         }
