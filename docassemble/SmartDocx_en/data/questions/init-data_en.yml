@@ -69,82 +69,110 @@ default screen parts:
         width: 14px; display: inline-block;
       }
       .sd-outline-title { flex: 1; }
+      /* SIDE RAIL — verified against DA's actual rendered structure:
+           <div role="navigation" class="...danavdiv">
+             <div class="nav flex-column nav-pills danav danav-vertical danavlinks">
+               <a class="nav-link danavlink">[group label]</a>
+               <div class="nav flex-column ... danav-vertical danavnested">
+                 <a class="daclickable nav-link danavlink active">Client's Name</a>
+                 ...
+               </div>
+               <a class="nav-link danavlink">[next group]</a>
+               <div style="display:none" class="danotshowing ...danavnested">
+                 ...
+               </div>
+             </div>
+           </div>
+         Old selectors (.dasections, .btn, .daactive, .dainlineinside)
+         don't match this DA version at all — that's why every prior
+         theming pass was a no-op for the actual rail. */
       div.danavdiv {
-        margin: 0; padding: 0 0 8px 0;
+        margin: 0; padding: 0;
         background: var(--sd-rail-bg);
         border-right: 1px solid var(--sd-border);
         min-height: 100vh;
       }
-      div.danavdiv.sd-rail-collapsed div.dasections,
+      div.danavdiv.sd-rail-collapsed nav.danavlinks,
       div.danavdiv.sd-rail-collapsed > *:not(.sd-outline-header) {
         display: none;
       }
-      div.dasections { line-height: 1.35; padding: 4px 0 0 0; }
-      div.dasections .btn {
-        display: flex; align-items: center; gap: 8px;
+      nav.danavlinks.danav-vertical {
+        padding: 4px 0 8px 0;
+        line-height: 1.35;
+      }
+      a.danavlink {
+        display: flex !important; align-items: center;
         width: 100%; text-align: left;
-        font-size: 13px; font-weight: 500; color: var(--sd-text);
+        font-size: 13px; font-weight: 500;
+        color: var(--sd-text) !important;
         padding: 6px 14px 6px 30px;
-        border-radius: 0; background: transparent;
-        border: none; border-left: 3px solid transparent;
+        border-radius: 0 !important; background: transparent !important;
+        border: none !important; border-left: 3px solid transparent !important;
         position: relative; white-space: normal;
+        text-decoration: none !important;
       }
-      div.dasections .btn:hover {
-        text-decoration: none;
-        background: rgba(0, 87, 139, 0.06); color: var(--sd-primary);
+      a.danavlink:hover {
+        background: rgba(0, 87, 139, 0.06) !important;
+        color: var(--sd-primary) !important;
       }
-      [data-bs-theme="dark"] div.dasections .btn:hover {
-        background: rgba(107, 168, 221, 0.08);
+      [data-bs-theme="dark"] a.danavlink:hover {
+        background: rgba(107, 168, 221, 0.08) !important;
       }
-      /* Group rows: bold label + decorative chevron pointing DOWN
-         (groups never collapse anymore, the chevron just signals
-         "this is a group with sub-items"). No cursor pointer; not
-         clickable. */
-      div.dasections .btn[data-sd-group] {
-        font-weight: 600; cursor: default; padding-left: 26px;
+      /* GROUP labels — non-clickable (no .daclickable, no data-key) —
+         get a static downward chevron and a default cursor. */
+      a.danavlink:not(.daclickable) {
+        font-weight: 600 !important;
+        cursor: default !important;
+        padding-left: 26px;
       }
-      div.dasections .btn[data-sd-group]::before {
+      a.danavlink:not(.daclickable)::before {
         content: ""; position: absolute; left: 10px; top: 50%;
         width: 0; height: 0; margin-top: -3px;
         border-style: solid; border-width: 5px 4px 0 4px;
         border-color: var(--sd-muted) transparent transparent transparent;
       }
-      div.dasections .btn[data-sd-status="complete"]::after,
-      div.dasections .btn[data-sd-status="active"]::after {
-        content: ""; position: absolute; left: 12px; top: 50%;
+      /* OVERRIDE DA's auto-collapse — show every group always.
+         DA hides non-active groups via inline style="display:none" plus
+         .danotshowing. !important + display:flex beats the inline. */
+      div.danavnested,
+      div.danavnested.danotshowing {
+        display: flex !important;
+      }
+      div.danavnested.danav-vertical { flex-direction: column; }
+      /* SUBSECTION links: indent + smaller font */
+      div.danavnested a.danavlink {
+        padding-left: 38px;
+        font-size: 12px;
+        font-weight: 400 !important;
+        color: var(--sd-muted) !important;
+      }
+      /* Active-section highlight */
+      a.danavlink.active {
+        background: var(--sd-active-bg) !important;
+        color: var(--sd-primary) !important;
+        font-weight: 600 !important;
+        border-left: 3px solid var(--sd-primary) !important;
+      }
+      /* Completion check (✓) on visited subsections */
+      a.danavlink[data-sd-status="complete"]::after,
+      a.danavlink[data-sd-status="active"]::after {
+        content: ""; position: absolute; left: 14px; top: 50%;
         transform: translateY(-50%);
-        width: 16px; height: 16px; border-radius: 50%;
-        font-size: 11px; font-weight: 700;
+        width: 14px; height: 14px; border-radius: 50%;
+        font-size: 10px; font-weight: 700;
         display: inline-flex; align-items: center; justify-content: center;
         line-height: 1;
       }
-      div.dasections .btn[data-sd-status="complete"]::after {
+      a.danavlink[data-sd-status="complete"]::after {
         content: "✓"; background: var(--sd-tick); color: #ffffff;
       }
-      div.dasections .btn[data-sd-status="active"]::after {
+      a.danavlink[data-sd-status="active"]::after {
         content: ""; background: var(--sd-pane-bg);
         border: 2px solid var(--sd-primary);
-        width: 14px; height: 14px;
-      }
-      div.dasections .btn.daactive,
-      div.dasections .daactive,
-      div.dasections .btn.btn-primary.daactive {
-        background: var(--sd-active-bg) !important;
-        color: var(--sd-primary) !important;
-        font-weight: 600;
-        border-left: 3px solid var(--sd-primary);
-      }
-      div.dasections div.dainlineinside .btn {
-        padding-left: 48px; font-size: 13px;
-        font-weight: 400; color: var(--sd-muted);
-      }
-      div.dasections div.dainlineinside .btn[data-sd-status="complete"]::after,
-      div.dasections div.dainlineinside .btn[data-sd-status="active"]::after {
-        left: 24px; width: 14px; height: 14px; font-size: 10px;
-      }
-      div.dasections div.dainlineinside .btn[data-sd-status="active"]::after {
         width: 12px; height: 12px;
       }
+      /* Don't draw the leaf check on group labels */
+      a.danavlink:not(.daclickable)[data-sd-status]::after { display: none; }
       .sd-section-title-bar {
         background: var(--sd-active-bg); color: var(--sd-primary);
         padding: 14px 24px; margin: 0 0 16px 0;
@@ -369,14 +397,25 @@ default screen parts:
           catch (e) {}
         }
 
-        // Stable key across renders — the button's text is the same
-        // whether DA renders it as <button> or <a class="daclickable">.
-        function keyOf(btn) {
-          return (btn.textContent || '').trim().toLowerCase();
+        // Section keyword — DA puts it on `data-key` attribute of every
+        // clickable nav link (verified by inspecting rendered HTML).
+        // For group labels (no data-key), fall back to text content.
+        function keyOf(link) {
+          return link.dataset.key || (link.textContent || '').trim().toLowerCase();
         }
 
         function decorateRail() {
-          var rail = document.querySelector('div.dasections');
+          // The visible side rail. DA wraps it in `.danavdiv` and the
+          // inner nav has classes `nav danav danavlinks danav-vertical`.
+          // (DA also emits a horizontal copy in the top navbar for
+          // narrow viewports — not what we're styling.)
+          var rail = document.querySelector('div.danavdiv nav.danavlinks.danav-vertical, div.danavdiv .danav-vertical.danavlinks, div.danavdiv .nav.danav-vertical');
+          if (!rail) {
+            // Some DA versions wrap differently — second-best: find the
+            // first vertical nav inside any .danavdiv.
+            var div = document.querySelector('div.danavdiv');
+            if (div) rail = div.querySelector('.nav.flex-column, [class*="danav-vertical"]');
+          }
           if (!rail) return null;
 
           // 1. OUTLINE HEADER — inject once.
@@ -392,53 +431,37 @@ default screen parts:
           }
 
           var visited = loadVisited();
-          var activeBtn = rail.querySelector('.daactive');
-          var activeKey = activeBtn ? keyOf(activeBtn) : null;
+          var activeLink = rail.querySelector('a.danavlink.active');
+          var activeKey = activeLink ? keyOf(activeLink) : null;
 
           if (activeKey) {
             visited[activeKey] = true;
             saveVisited(visited);
           }
 
-          // 2. GROUPS — any .btn that is followed by a .dainlineinside
-          //    container is a group header. Tag it with [data-sd-group]
-          //    so the CSS draws a decorative chevron. Children stay
-          //    always-visible (no toggle) per the latest UX request:
-          //    user wants groups to appear as static structural labels,
-          //    not click-to-collapse interactions.
-          rail.querySelectorAll('.dainlineinside').forEach(function (children) {
-            var sib = children.previousElementSibling;
-            var groupBtn = null;
-            while (sib && !groupBtn) {
-              if (sib.matches && sib.matches('.btn')) {
-                groupBtn = sib;
-              } else if (sib.querySelector) {
-                groupBtn = sib.querySelector('.btn');
-              }
-              if (!groupBtn) sib = sib.previousElementSibling;
-            }
-            if (!groupBtn) return;
-            groupBtn.dataset.sdGroup = '1';
-            // Groups are non-clickable: the keyword is just a display
-            // label, so let DA's default href (if any) navigate or
-            // fall through to no-op. We DO NOT bind a toggle handler;
-            // children are always visible.
+          // 2. FORCE-EXPAND any nested groups DA collapsed via inline
+          //    `style="display: none"` (it auto-collapses non-active
+          //    groups). Strip the inline style so our CSS !important
+          //    `display: flex` wins.
+          rail.querySelectorAll('.danavnested').forEach(function (nested) {
+            if (nested.style.display === 'none') nested.style.display = '';
           });
 
-          // 3. COMPLETION STATUS on every leaf button.
-          rail.querySelectorAll('.btn').forEach(function (btn) {
-            if (btn.dataset.sdGroup) return;  // groups don't get a check
-            var key = keyOf(btn);
-            if (btn.classList.contains('daactive')) {
-              btn.dataset.sdStatus = 'active';
+          // 3. COMPLETION STATUS on every leaf link. Group labels
+          //    (no .daclickable) are skipped — they don't get checks.
+          rail.querySelectorAll('a.danavlink').forEach(function (link) {
+            if (!link.classList.contains('daclickable')) return;
+            var key = keyOf(link);
+            if (link.classList.contains('active')) {
+              link.dataset.sdStatus = 'active';
             } else if (visited[key]) {
-              btn.dataset.sdStatus = 'complete';
+              link.dataset.sdStatus = 'complete';
             } else {
-              btn.removeAttribute('data-sd-status');
+              link.removeAttribute('data-sd-status');
             }
           });
 
-          return { activeBtn: activeBtn, activeKey: activeKey };
+          return { activeBtn: activeLink, activeKey: activeKey };
         }
 
         // 4. SECTION TITLE BAR. Synthesised at the top of the question
