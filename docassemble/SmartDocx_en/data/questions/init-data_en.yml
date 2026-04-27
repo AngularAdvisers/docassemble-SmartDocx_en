@@ -28,6 +28,33 @@ default screen parts:
           );
         }
       }
+
+      // Theme bridge — listen for the parent's color-scheme directive and
+      // mirror it onto <html data-bs-theme="…">. Smart-Docx posts a
+      // `smartdocx:theme` message on iframe load and again whenever its
+      // dark/light toggle flips, so the interview always matches the
+      // parent app's mode. Falls back to whatever DA's server-side render
+      // chose when no message is received (e.g. running outside Smart-Docx).
+      (function () {
+        function applyTheme(mode) {
+          var t = (mode === 'dark') ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-bs-theme', t);
+        }
+        window.addEventListener('message', function (ev) {
+          var d = ev && ev.data;
+          if (!d || typeof d !== 'object') return;
+          if (d.type === 'smartdocx:theme') applyTheme(d.mode);
+        });
+        // Tell the parent we're ready to receive a theme — covers the
+        // edge case where the parent missed the iframe's `load` event
+        // (e.g. it loads first and the iframe arrives later) by giving
+        // it an explicit re-send trigger.
+        if (window.parent && window.parent !== window) {
+          try {
+            window.parent.postMessage({ type: 'smartdocx:theme-request' }, '*');
+          } catch (e) { /* parent in different origin pre-handshake — ignore */ }
+        }
+      })();
     </script>
 ---
 # Expose the interview's `metadata: title:` as a plain variable so the
