@@ -879,28 +879,17 @@ default screen parts:
           center.appendChild(prev);
 
           if (isSignature) {
-            // Signature screen: DA renders Save/Clear as <a href="#">
-            // links with classes `.dasigsave` and `.dasigclear`. DA's
-            // bundle.js binds click handlers that read the canvas,
-            // populate `#da_the_image`, and submit `#dasigform`. We
-            // proxy clicks to those links — the bar then mirrors a
-            // regular screen's structure: Next sits in the center
-            // alongside Previous, Finish on the right (where Clear
-            // lives because there's no Finish concept on a signature
-            // — Clear is the secondary action that fits the right
-            // slot). Both Next and Clear are <button type="button">
-            // because they don't directly submit; they delegate to
-            // DA's <a> handlers.
-            var sigNext = document.createElement('button');
-            sigNext.type = 'button';
-            sigNext.className = 'sd-btn sd-btn--next';
-            sigNext.innerHTML = 'Next <span class="sd-btn-glyph">▶</span>';
-            sigNext.addEventListener('click', function () {
-              var sigSave = document.querySelector('.dasigsave');
-              if (sigSave) sigSave.click();
-            });
-            center.appendChild(sigNext);
-
+            // Signature screen mirrors a regular screen's bar layout:
+            //   left   → Clear (secondary; the user only needs it
+            //            when they want to redo a stroke)
+            //   center → Previous + Next  (Next saves & advances,
+            //            same as DA's `.dasigsave` link)
+            //   right  → Finish           (also saves & advances —
+            //            signature IS the last data-entry step, so
+            //            "Finish" reads more accurately than "Next"
+            //            once the user has actually signed; we keep
+            //            both so the bar's geometry matches every
+            //            other screen)
             var clear = document.createElement('button');
             clear.type = 'button';
             clear.className = 'sd-btn sd-btn--clear';
@@ -916,12 +905,33 @@ default screen parts:
                 window.daSignaturePad.clear();
                 return;
               }
-              // Fallback: trigger DA's clear, then re-expand.
               var sigClear = document.querySelector('.dasigclear');
               if (sigClear) sigClear.click();
               setTimeout(expandSignatureCanvas, 30);
             });
-            right.appendChild(clear);
+            left.appendChild(clear);
+
+            // Both Next and Finish proxy to DA's `.dasigsave` link.
+            // DA's bound handler reads the canvas, fills
+            // #da_the_image, and submits #dasigform.
+            function clickSigSave() {
+              var sigSave = document.querySelector('.dasigsave');
+              if (sigSave) sigSave.click();
+            }
+
+            var sigNext = document.createElement('button');
+            sigNext.type = 'button';
+            sigNext.className = 'sd-btn sd-btn--next';
+            sigNext.innerHTML = 'Next <span class="sd-btn-glyph">▶</span>';
+            sigNext.addEventListener('click', clickSigSave);
+            center.appendChild(sigNext);
+
+            var sigFinish = document.createElement('button');
+            sigFinish.type = 'button';
+            sigFinish.className = 'sd-btn sd-btn--finish';
+            sigFinish.innerHTML = '<span class="sd-btn-glyph">✓</span> Finish';
+            sigFinish.addEventListener('click', clickSigSave);
+            right.appendChild(sigFinish);
           } else {
             // Regular question screen: real submit buttons that post
             // `#daform` with `_continue=Continue`, identical to DA's
