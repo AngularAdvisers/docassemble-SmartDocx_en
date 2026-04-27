@@ -680,27 +680,19 @@ default screen parts:
           //        collapses
           //      • arrows-expand   — rail collapsed, click expands
           if (!rail.parentElement.querySelector('.sd-outline-header')) {
-            // Official Bootstrap-icons 1.11.3 paths.
-            //   arrows-collapse — top arrow tip at y≈3.7, bottom tip
-            //     at y≈13.3: arrows COMPRESSED toward the middle
-            //     line; visual cue for "you can collapse from here."
-            //   arrows-expand   — top arrow tip at y≈1.7, bottom tip
-            //     at y≈14.3: arrows STRETCHED away from the middle
-            //     line; visual cue for "you can expand from here."
+            // Bootstrap-icons 1.11.3 — arrows-collapse / arrows-expand.
+            // Paths copied verbatim from the upstream SVG files; do
+            // not edit by hand. Earlier paste broke the top-arrow
+            // closure (`l2-2z` segment) and rendered overlapping
+            // partial shapes.
             var SD_ICON_COLLAPSE =
               '<svg xmlns="http://www.w3.org/2000/svg" class="sd-outline-toggle-icon" ' +
               'width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">' +
-              '<path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8z' +
-              'M7.646 2.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 3.707V6.5a.5.5 0 0 1-1 0V3.707' +
-              'L6.354 4.854a.5.5 0 1 1-.708-.708zM8 10a.5.5 0 0 1 .5.5v2.793l1.146-1.147a.5.5 0 0 1' +
-              ' .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 13.293V10.5A.5.5 0 0 1 8 10z"/></svg>';
+              '<path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 2.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 3.707V6.5a.5.5 0 0 1-1 0V3.707L6.354 4.854a.5.5 0 1 1-.708-.708l2-2zM8 10a.5.5 0 0 1 .5.5v2.793l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 13.293V10.5A.5.5 0 0 1 8 10z"/></svg>';
             var SD_ICON_EXPAND =
               '<svg xmlns="http://www.w3.org/2000/svg" class="sd-outline-toggle-icon" ' +
               'width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">' +
-              '<path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8z' +
-              'M7.646.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 1.707V5.5a.5.5 0 0 1-1 0V1.707' +
-              'L6.354 2.854a.5.5 0 1 1-.708-.708zM8 10a.5.5 0 0 1 .5.5v3.793l1.146-1.147a.5.5 0 0 1' +
-              ' .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 14.293V10.5A.5.5 0 0 1 8 10z"/></svg>';
+              '<path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 1.707V5.5a.5.5 0 0 1-1 0V1.707L6.354 2.854a.5.5 0 1 1-.708-.708l2-2zm-.5 11.354a.5.5 0 0 0 0 .708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 13.293V10.5a.5.5 0 0 0-1 0v2.793l-1.146-1.147a.5.5 0 0 0-.708 0z"/></svg>';
 
             var hdr = document.createElement('div');
             hdr.className = 'sd-outline-header';
