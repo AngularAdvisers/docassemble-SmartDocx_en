@@ -57,40 +57,58 @@ default screen parts:
         padding-bottom: 72px !important;
         margin: 0 !important;
       }
-      /* Strip top/side padding from DA's body wrapper so the rail and
-         question pane sit flush at the top-left of the iframe. */
-      .dabody, .da-pad-for-navbar {
-        padding: 0 !important;
-        margin: 0 !important;
+      /* Body wrapper + Bootstrap container: zero padding/max-width so
+         the rail and question pane sit flush against the iframe's
+         left edge, no centred-content gutter. */
+      .dabody, .da-pad-for-navbar { padding: 0 !important; margin: 0 !important; }
+      .container, .container-fluid, .container-xl, .container-lg,
+      .container-md, .container-sm {
+        max-width: none !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
       }
-      /* HotDocs layout: outline rail + question pane SIDE BY SIDE at
-         every viewport. DA's default Bootstrap row goes to wrap-stack
-         on viewports where col-md-3 / col-md-9 don't both fit (which
-         happens when the parent iframe is narrow). Force flex-row,
-         no-wrap, and zero gutters so they always sit horizontally
-         flush. */
+
+      /* HotDocs layout: outline rail (fixed 240px) + question pane
+         (fills remainder). Side-by-side at every viewport — DA's
+         default Bootstrap row stacks them when col widths don't fit,
+         and the user reported the pane being cut off because flex
+         items default to `min-width: auto` (refuse to shrink below
+         content). Explicit `min-width: 0` on the pane fixes that. */
       .row.tab-content {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         margin: 0 !important;
+        width: 100% !important;
       }
       .row.tab-content > [class*="col"] {
         padding-left: 0 !important;
         padding-right: 0 !important;
       }
-      /* DA emits a horizontal-nav duplicate ALSO inside the row for
-         narrow viewports (col d-md-none). Since we're forcing the
-         vertical rail to show always, the horizontal copy is just
-         dead weight stacking above the pane — kill it. */
+      /* Hide the horizontal-nav duplicate (DA emits it for narrow
+         viewports; we always show the vertical rail instead). */
       .row.tab-content > .col.d-md-none { display: none !important; }
-      /* Force the vertical rail to render at every viewport (override
-         Bootstrap's `d-none d-md-block` responsive hide). */
-      div.danavdiv { display: block !important; }
-      /* The question pane stretches to fill the rest of the row. */
+      /* Vertical rail — always visible, fixed width so the pane has
+         predictable remaining space. */
+      div.danavdiv {
+        display: block !important;
+        flex: 0 0 240px !important;
+        width: 240px !important;
+        max-width: 240px !important;
+        min-width: 240px !important;
+      }
+      /* Question pane fills ALL the remaining width and is allowed to
+         shrink below its intrinsic content (so long form fields don't
+         push the layout off-screen). */
       .row.tab-content > #daquestion {
-        flex: 1 1 auto !important;
+        flex: 1 1 0 !important;
+        width: auto !important;
         max-width: none !important;
+        min-width: 0 !important;
+        overflow-x: hidden !important;
+        padding: 16px 24px !important;
       }
       /* Outline header — tight, no left icon, "Outline" in title-case
          (no uppercase), collapse/expand chevron pushed to the RIGHT. */
@@ -246,9 +264,13 @@ default screen parts:
       }
       /* Don't draw the leaf check on group labels (they have a chevron). */
       a.danavlink:not(.daclickable)[data-sd-status]::after { display: none; }
+      /* Section title bar — first child of #daquestion, extended to
+         the pane's full width via negative margins so it bleeds to
+         the pane edges (looks like a HotDocs section header strip). */
       .sd-section-title-bar {
         background: var(--sd-active-bg); color: var(--sd-primary);
-        padding: 14px 24px; margin: 0 0 16px 0;
+        padding: 12px 24px;
+        margin: -16px -24px 16px -24px;
         font-size: 16px; font-weight: 600;
         border-bottom: 1px solid var(--sd-border);
       }
@@ -572,14 +594,14 @@ default screen parts:
           return { activeBtn: activeLink, activeKey: activeKey };
         }
 
-        // 4. SECTION TITLE BAR. Synthesised at the top of the question
-        //    pane — always reflects the current screen because we read
-        //    .daactive AT this render. Selector falls through several
-        //    plausible DA containers; if none match, we anchor the bar
-        //    at the top of <main> or <body> so it's always visible.
+        // 4. SECTION TITLE BAR. Inserted as the FIRST CHILD of the
+        //    question pane so it appears ABOVE the form fields within
+        //    the same column. Earlier the bar was inserted as a SIBLING
+        //    of #daquestion inside `.row.tab-content`, which (now that
+        //    the row is flex-row) made it render as a third column to
+        //    the LEFT of the form. The first-child placement keeps it
+        //    visually pinned to the top of the form pane.
         function injectSectionTitle(activeBtn) {
-          // Drop any prior bar — DA does full-page reloads but defensive
-          // anyway in case a screen renders twice.
           document.querySelectorAll('.sd-section-title-bar').forEach(function (n) { n.remove(); });
           if (!activeBtn) return;
           var label = (activeBtn.textContent || '').trim();
@@ -589,14 +611,11 @@ default screen parts:
           bar.className = 'sd-section-title-bar';
           bar.textContent = label;
 
-          var pane = document.querySelector(
-            '#daMainQuestion, #daquestion, #dadiv, [role="main"], main, .dafullscreen'
-          );
-          if (pane && pane.parentElement) {
-            pane.parentElement.insertBefore(bar, pane);
+          var pane = document.querySelector('#daquestion');
+          if (pane) {
+            pane.insertBefore(bar, pane.firstChild);
           } else {
-            // Last-resort anchor: the bar at the top of body so it's
-            // never silently missing if DA's HTML structure shifts.
+            // Fallback for an unfamiliar DA template — anchor at body.
             document.body.insertBefore(bar, document.body.firstChild);
           }
         }
