@@ -55,20 +55,23 @@ default screen parts:
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         padding-bottom: 72px !important;
       }
+      /* Outline header — tight, no left icon, "Outline" in title-case
+         (no uppercase), collapse/expand chevron pushed to the RIGHT. */
       .sd-outline-header {
-        display: flex; align-items: center; gap: 8px;
-        padding: 12px 16px;
+        display: flex; align-items: center;
+        padding: 8px 12px;
         background: var(--sd-rail-bg); color: var(--sd-text);
-        font-size: 13px; font-weight: 700; letter-spacing: 0.04em;
-        text-transform: uppercase; cursor: pointer; user-select: none;
+        font-size: 14px; font-weight: 600;
+        cursor: pointer; user-select: none;
         border-bottom: 1px solid var(--sd-border);
       }
       .sd-outline-header:hover { color: var(--sd-primary); }
-      .sd-outline-chev {
-        font-size: 12px; color: var(--sd-muted);
-        width: 14px; display: inline-block;
-      }
       .sd-outline-title { flex: 1; }
+      .sd-outline-chev {
+        margin-left: auto;
+        font-size: 11px; color: var(--sd-muted);
+        display: inline-block;
+      }
       /* SIDE RAIL — verified against DA's actual rendered structure:
            <div role="navigation" class="...danavdiv">
              <div class="nav flex-column nav-pills danav danav-vertical danavlinks">
@@ -92,46 +95,88 @@ default screen parts:
          broke the rail's flex layout in 1.0.42 and hid sections; this
          pass goes back to non-aggressive overrides. */
 
+      /* Pull the rail flush against the left edge and to the top of
+         the page — no Bootstrap offset, no top gap. */
       div.danavdiv {
         background: var(--sd-rail-bg);
         border-right: 1px solid var(--sd-border);
+        padding: 0 !important;
+        margin-left: 0 !important;
+        margin-top: 0 !important;
       }
+      /* Bootstrap's `.offset-xl-1 .col-xl-2 .col-lg-3 .col-md-3` pushes
+         the rail in. Override the column offset — col widths stay so
+         the question pane keeps its proportional size. */
+      div.danavdiv.offset-xl-1 { margin-left: 0 !important; }
 
-      /* Each section link — color + indent for chevron / check. No
-         display/width overrides — DA's `nav-pills.flex-column` already
-         stacks them correctly. */
+      /* Each section link — color + room on the right for the
+         collapse icon (group rows) or green ✓ (subsections). No
+         left chevron — that left padding caused the duplicated
+         "twisties" the user saw. */
       a.danavlink {
         color: var(--sd-text);
-        padding-left: 32px !important;  /* room for ::before chevron and ::after check */
+        padding-right: 30px !important;
+        position: relative;
       }
       a.danavlink:hover { color: var(--sd-primary); }
 
-      /* GROUP labels — non-clickable, decorative downward chevron. */
+      /* GROUP labels — non-clickable. NO ::before chevron (was
+         confusing the user with multiple icons). The collapse/expand
+         icon is injected by JS as a clickable span on the RIGHT,
+         outside the link's own click target. */
       a.danavlink:not(.daclickable) {
         font-weight: 700;
         cursor: default;
       }
-      a.danavlink:not(.daclickable)::before {
-        content: ""; position: absolute; left: 14px; top: 50%;
-        width: 0; height: 0; margin-top: -3px;
-        border-style: solid; border-width: 5px 4px 0 4px;
-        border-color: var(--sd-muted) transparent transparent transparent;
+
+      /* Wrapper that holds both the group's <a> and its collapse
+         button, so the button can sit visually outside the link's
+         click area. Injected by JS. */
+      .sd-group-row {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+      }
+      .sd-group-row > a.danavlink { flex: 1; }
+      .sd-group-collapse-btn {
+        position: absolute;
+        right: 6px; top: 50%;
+        transform: translateY(-50%);
+        width: 22px; height: 22px;
+        display: inline-flex;
+        align-items: center; justify-content: center;
+        background: transparent;
+        border: 0;
+        color: var(--sd-muted);
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+        border-radius: 3px;
+        padding: 0;
+      }
+      .sd-group-collapse-btn:hover {
+        background: rgba(0, 87, 139, 0.10);
+        color: var(--sd-primary);
       }
 
-      /* Make every nested group visible — override DA's auto-collapse.
-         Don't force display:flex; just unhide. DA's class .danotshowing
-         applies display:none; !important wins. */
+      /* Make every nested group visible by default — override DA's
+         auto-collapse. !important wins over DA's inline display:none.
+         Our JS toggles a class to override this when the user clicks
+         the collapse button. */
       div.danavnested {
         display: block !important;
       }
-      /* DA's nested container is already a flex container via its own
-         classes. Don't fight it. Just unhide. */
+      div.danavnested.sd-collapsed {
+        display: none !important;
+      }
 
-      /* SUBSECTION links: smaller font + muted color. */
+      /* SUBSECTION links: smaller font + muted color. Indent for
+         the green ✓ on the LEFT. */
       div.danavnested a.danavlink {
         font-size: 12px;
         font-weight: 400;
         color: var(--sd-muted);
+        padding-left: 32px !important;
       }
 
       /* Active section highlight — pale blue + navy + left bar. */
@@ -416,10 +461,61 @@ default screen parts:
 
           // 2. FORCE-EXPAND any nested groups DA collapsed via inline
           //    `style="display: none"` (it auto-collapses non-active
-          //    groups). Strip the inline style so our CSS !important
-          //    `display: flex` wins.
+          //    groups). Strip the inline style so our CSS wins.
           rail.querySelectorAll('.danavnested').forEach(function (nested) {
             if (nested.style.display === 'none') nested.style.display = '';
+          });
+
+          // 2b. INJECT a single collapse/expand icon on the RIGHT of
+          //     every group row. The icon is its own clickable button
+          //     so the group's text label stays a non-interactive
+          //     label — clicking the text does NOT collapse, only the
+          //     button does. (Per the user's spec: "There shouldn't be
+          //     a twistie there should be a collapse and expand icon
+          //     just right of the text.")
+          rail.querySelectorAll('a.danavlink:not(.daclickable)').forEach(function (groupLink) {
+            // Skip if we've already wrapped this group.
+            if (groupLink.parentElement && groupLink.parentElement.classList.contains('sd-group-row')) return;
+            // Find the matching .danavnested sibling (the children
+            // container that follows this group label).
+            var nested = null;
+            var sib = groupLink.nextElementSibling;
+            while (sib) {
+              if (sib.classList && sib.classList.contains('danavnested')) {
+                nested = sib;
+                break;
+              }
+              sib = sib.nextElementSibling;
+            }
+            if (!nested) return;  // not a group, no children — skip
+
+            // Wrap the link in a row so the collapse button can sit
+            // absolutely positioned next to it.
+            var row = document.createElement('div');
+            row.className = 'sd-group-row';
+            groupLink.parentElement.insertBefore(row, groupLink);
+            row.appendChild(groupLink);
+
+            // Use a stable per-group sessionStorage key so collapse
+            // state survives screen reloads within the interview.
+            var collapseKey = INTERVIEW_KEY + ':collapsed:' + (groupLink.textContent || '').trim();
+            var collapsed = sessionStorage.getItem(collapseKey) === '1';
+            if (collapsed) nested.classList.add('sd-collapsed');
+
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'sd-group-collapse-btn';
+            btn.setAttribute('aria-label', 'Toggle ' + (groupLink.textContent || '').trim());
+            btn.textContent = collapsed ? '＋' : '−';
+            btn.addEventListener('click', function (ev) {
+              ev.preventDefault();
+              ev.stopPropagation();
+              var nowCollapsed = !nested.classList.contains('sd-collapsed');
+              nested.classList.toggle('sd-collapsed', nowCollapsed);
+              btn.textContent = nowCollapsed ? '＋' : '−';
+              try { sessionStorage.setItem(collapseKey, nowCollapsed ? '1' : '0'); } catch (e) {}
+            });
+            row.appendChild(btn);
           });
 
           // 3. COMPLETION STATUS on every leaf link. Group labels
