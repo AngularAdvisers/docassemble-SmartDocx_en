@@ -373,17 +373,20 @@ default screen parts:
       /* Pane container — top padding only, no horizontal padding on
          field rows so inputs hug the section title bar's left edge. */
       #daquestion .dafieldpart { padding: 0 !important; }
-      /* Buttons row: keep flush left below the form. */
-      #daquestion .da-button-set { padding: 0 !important; }
-      /* Don't hide DA's native Continue / Back. Hiding them via
-         clip-rect or off-screen positioning was breaking form
-         submission — DA's bundle.js submit-handlers were silently
-         skipping the actual save logic, leaving the user looped
-         back to the same screen with their answers gone. Letting
-         DA render its own buttons in their normal place keeps
-         submission working; our bottom bar is still there for the
-         HotDocs Previous/Next/Finish look, and it just clicks DA's
-         visible buttons under the hood. */
+      /* Hide DA's native Back / Continue button row entirely — the
+         HotDocs-style bottom bar (Previous / Next / Finish) is the
+         only navigation surface the user should see. Submission still
+         works because our bar drives the buttons via
+         `jQuery(button).trigger('click')`, which fires DA's bound
+         click handlers regardless of visibility. (Earlier attempts
+         using `clip-rect` or off-screen positioning + a native
+         dispatchEvent broke submission; `display: none` + jQuery
+         trigger does not.) */
+      #daquestion .da-button-set,
+      #da-continue-button,
+      #dabackToQuestion {
+        display: none !important;
+      }
       .sd-bottom-bar {
         position: fixed; bottom: 0; left: 0; right: 0;
         display: flex; align-items: center; gap: 8px;
