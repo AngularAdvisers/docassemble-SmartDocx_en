@@ -178,13 +178,16 @@ default screen parts:
       }
       a.danavlink:hover { color: var(--sd-primary); }
 
-      /* Hide ANY element children of `<a class="danavlink">`. DA's
-         bundle.js injects a `.toggler` arrow node AFTER page load —
-         after my JS has already stripped the link's children at
-         DOMContentLoaded — so my JS pass alone doesn't catch it.
-         A CSS rule that hides every element child wins regardless
-         of when DA's JS runs. Text content (the section name) is a
-         text node, not an element, so it stays visible. */
+      /* AGGRESSIVE: hide every span/i/svg/img inside the rail except
+         our own injected elements. DA's bundle.js injects icons /
+         toggler arrows after page load and earlier targeted rules
+         (`.toggler { display: none }`, `a.danavlink > *`) didn't
+         catch every variant. Ours are kept via a class-based
+         exception list. */
+      div.danavdiv span:not(.sd-outline-chev):not(.sd-outline-title),
+      div.danavdiv i,
+      div.danavdiv svg,
+      div.danavdiv img,
       a.danavlink > * {
         display: none !important;
       }
@@ -786,6 +789,38 @@ default screen parts:
         } else {
           paint();
         }
+
+        // Watchdog: DA's bundle.js injects icon nodes inside nav
+        // links AFTER DOMContentLoaded fires. A MutationObserver
+        // catches any post-load injection and strips it immediately.
+        try {
+          var rail = document.querySelector('div.danavdiv');
+          if (rail && typeof MutationObserver !== 'undefined') {
+            var stripIcons = function () {
+              rail.querySelectorAll('a.danavlink').forEach(function (link) {
+                for (var i = link.childNodes.length - 1; i >= 0; i--) {
+                  var n = link.childNodes[i];
+                  if (n.nodeType !== 3) link.removeChild(n);
+                }
+              });
+            };
+            var mo = new MutationObserver(function (muts) {
+              for (var i = 0; i < muts.length; i++) {
+                if (muts[i].addedNodes && muts[i].addedNodes.length) {
+                  stripIcons();
+                  return;
+                }
+              }
+            });
+            mo.observe(rail, { childList: true, subtree: true });
+            // Also re-strip after a short delay to catch DA scripts
+            // that run later than DOMContentLoaded but before any
+            // mutation we observe.
+            setTimeout(stripIcons, 50);
+            setTimeout(stripIcons, 250);
+            setTimeout(stripIcons, 800);
+          }
+        } catch (e) { /* unsupported old browser — CSS rules cover us */ }
       })();
     </script>
 ---
