@@ -82,6 +82,13 @@ default screen parts:
         flex-wrap: nowrap !important;
         margin: 0 !important;
         width: 100% !important;
+        /* Stretch the row to fill the viewport so the rail's
+           background and border extend the full height even when
+           the question content is short. The fixed bottom bar
+           overlays this row from outside the layout — body padding
+           keeps the last bit of content visible above the bar. */
+        min-height: 100vh !important;
+        align-items: stretch !important;
       }
       .row.tab-content > [class*="col"] {
         padding-left: 0 !important;
@@ -91,13 +98,18 @@ default screen parts:
          viewports; we always show the vertical rail instead). */
       .row.tab-content > .col.d-md-none { display: none !important; }
       /* Vertical rail — always visible, fixed width so the pane has
-         predictable remaining space. */
+         predictable remaining space. align-self stretch + the row's
+         100vh min-height makes the rail fill the full viewport,
+         so the rail-bg and right-border extend to the very bottom
+         even when the question content is short. (Existing rule
+         further down sets background/border colors.) */
       div.danavdiv {
         display: block !important;
         flex: 0 0 240px !important;
         width: 240px !important;
         max-width: 240px !important;
         min-width: 240px !important;
+        align-self: stretch !important;
       }
       /* Question pane fills ALL the remaining width and is allowed to
          shrink below its intrinsic content (so long form fields don't
