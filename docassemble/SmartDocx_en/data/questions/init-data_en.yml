@@ -132,10 +132,29 @@ default screen parts:
         width: 16px; text-align: center;
       }
       .sd-outline-title { flex: 1; }
-      .sd-outline-chev {
+      /* Expand/collapse toggle — Bootstrap-icons `arrows-collapse`
+         (rail expanded) ↔ `arrows-expand` (rail collapsed). Inlined
+         as SVG so we don't need to ship a Bootstrap-icons font
+         alongside DA's own Font Awesome bundle. */
+      .sd-outline-toggle {
         margin-left: auto;
-        font-size: 11px; color: var(--sd-muted);
-        display: inline-block;
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 22px; height: 22px;
+        color: var(--sd-muted);
+        cursor: pointer;
+        border-radius: 4px;
+        background: transparent;
+        line-height: 0;
+      }
+      .sd-outline-header:hover .sd-outline-toggle { color: var(--sd-primary); }
+      .sd-outline-toggle svg { width: 16px; height: 16px; display: block; }
+
+      /* Rail collapsed — keep just the Outline header visible; hide
+         everything else inside the .danavdiv (the nav links and
+         their wrappers). The .sd-outline-toggle inside the header
+         itself is whitelisted by the explicit selector. */
+      div.danavdiv.sd-rail-collapsed > *:not(.sd-outline-header) {
+        display: none !important;
       }
       /* SIDE RAIL — verified against DA's actual rendered structure:
            <div role="navigation" class="...danavdiv">
@@ -191,9 +210,9 @@ default screen parts:
          (`.toggler { display: none }`, `a.danavlink > *`) didn't
          catch every variant. Ours are kept via a class-based
          exception list (.sd-outline-* classes). */
-      div.danavdiv span:not(.sd-outline-chev):not(.sd-outline-title):not(.sd-outline-icon),
+      div.danavdiv span:not(.sd-outline-toggle):not(.sd-outline-title):not(.sd-outline-icon),
       div.danavdiv i:not(.sd-outline-icon),
-      div.danavdiv svg:not(.sd-outline-icon),
+      div.danavdiv svg:not(.sd-outline-toggle-icon),
       div.danavdiv img,
       a.danavlink > * {
         display: none !important;
@@ -655,17 +674,40 @@ default screen parts:
           if (!rail) return null;
 
           // 1. OUTLINE HEADER — inject once.
-          //    Layout: [list-ul icon] [Outline title]   [collapse chevron]
+          //    Layout: [list-ul icon] [Outline title]   [toggle icon]
+          //    Toggle uses Bootstrap-icons SVGs inlined so we don't
+          //    need a separate icon-font asset:
+          //      • arrows-collapse — rail expanded (default), click
+          //        collapses
+          //      • arrows-expand   — rail collapsed, click expands
           if (!rail.parentElement.querySelector('.sd-outline-header')) {
+            var SD_ICON_COLLAPSE =
+              '<svg xmlns="http://www.w3.org/2000/svg" class="sd-outline-toggle-icon" ' +
+              'width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">' +
+              '<path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8z' +
+              'M7.646.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 1.707V5.5a.5.5 0 0 1-1 0V1.707' +
+              'L6.354 2.854a.5.5 0 1 1-.708-.708l2-2zM8 10a.5.5 0 0 1 .5.5v3.793l1.146-1.147a.5.5 0 0 1' +
+              ' .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 14.293V10.5A.5.5 0 0 1 8 10z"/></svg>';
+            var SD_ICON_EXPAND =
+              '<svg xmlns="http://www.w3.org/2000/svg" class="sd-outline-toggle-icon" ' +
+              'width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">' +
+              '<path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8z' +
+              'M7.646 1.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 2.707V5.5a.5.5 0 0 1-1 0V2.707' +
+              'L6.354 3.854a.5.5 0 1 1-.708-.708l2-2zm-.5 11.354a.5.5 0 0 0 0 .708l2 2a.5.5 0 0 0 .708 0' +
+              'l2-2a.5.5 0 0 0-.708-.708L8.5 13.293V10.5a.5.5 0 0 0-1 0v2.793l-1.146-1.147a.5.5 0 0 0-.708 0z"/></svg>';
+
             var hdr = document.createElement('div');
             hdr.className = 'sd-outline-header';
             hdr.innerHTML =
               '<i class="fa-solid fa-list-ul sd-outline-icon" aria-hidden="true"></i>' +
               '<span class="sd-outline-title">Outline</span>' +
-              '<span class="sd-outline-chev">▾</span>';
+              '<span class="sd-outline-toggle" role="button" aria-label="Collapse outline">' +
+              SD_ICON_COLLAPSE + '</span>';
             hdr.addEventListener('click', function () {
               var collapsed = rail.parentElement.classList.toggle('sd-rail-collapsed');
-              hdr.querySelector('.sd-outline-chev').textContent = collapsed ? '▸' : '▾';
+              var toggle = hdr.querySelector('.sd-outline-toggle');
+              toggle.innerHTML = collapsed ? SD_ICON_EXPAND : SD_ICON_COLLAPSE;
+              toggle.setAttribute('aria-label', collapsed ? 'Expand outline' : 'Collapse outline');
             });
             rail.parentElement.insertBefore(hdr, rail);
           }
