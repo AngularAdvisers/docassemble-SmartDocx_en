@@ -389,14 +389,18 @@ default screen parts:
       }
       .sd-bottom-bar {
         position: fixed; bottom: 0; left: 0; right: 0;
-        display: flex; align-items: center; gap: 8px;
+        /* Centered grouping: Previous + Next sit together in the
+           middle of the bar (Finish replaces Next on the final
+           review screen). justify-content: center keeps them
+           grouped regardless of viewport width. */
+        display: flex; align-items: center; justify-content: center;
+        gap: 12px;
         padding: 10px 24px;
         background: var(--sd-pane-bg);
         border-top: 1px solid var(--sd-border);
         z-index: 1000;
         box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.06);
       }
-      .sd-bottom-bar .sd-btn--prev { margin-right: auto; }
       [data-bs-theme="dark"] .sd-bottom-bar {
         box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.4);
       }
@@ -748,47 +752,55 @@ default screen parts:
           var existing = document.querySelector('.sd-bottom-bar');
           if (existing) existing.remove();
 
-          var form = document.querySelector('form#daform, form[name="daform"], #daquestion form, form');
-          if (!form) return;
+          // Verify DA's question form is on the page; bail otherwise.
+          if (!document.getElementById('daform')) return;
 
           var bar = document.createElement('div');
           bar.className = 'sd-bottom-bar';
           if (isFinal) bar.classList.add('sd-bottom-bar--final');
 
-          // PREVIOUS — `type="submit"` + `name="_back_button"` so
-          // DA's POST handler routes this as a back-navigation. Only
-          // shown when DA actually rendered a Back button on this
-          // screen (first question has none). Fall back to history.back
-          // if no Back exists in DOM.
+          // We append `bar` to <body> (NOT inside the form) so that
+          // `position: fixed` reliably anchors to the viewport — a
+          // transform/filter on any ancestor of #daform would create
+          // a fixed-positioning containing block and push the bar
+          // off-screen.  HTML5's `form="<id>"` attribute on each
+          // submit button associates it with the target form by ID
+          // even when the button lives outside the form's DOM
+          // hierarchy. Native click → native form submit, no proxy.
+
+          // PREVIOUS — submits DA's separate navbar back form
+          // (`#dabackbutton`), which already has the `_back_one=1`
+          // hidden input DA's POST handler expects for navigation.
+          // Falls back to history.back() if no back form is present
+          // (e.g. on the first question).
           var prev = document.createElement('button');
-          prev.type = 'submit';
-          prev.name = '_back_button';
-          prev.value = 'Back';
           prev.className = 'sd-btn sd-btn--prev';
           prev.innerHTML = '<span class="sd-btn-glyph">◀</span> Previous';
-          if (!document.querySelector('#dabackToQuestion, button[name="_back_button"]')) {
+          if (document.getElementById('dabackbutton')) {
+            prev.type = 'submit';
+            prev.setAttribute('form', 'dabackbutton');
+          } else {
             prev.type = 'button';
-            prev.removeAttribute('name');
             prev.addEventListener('click', function () {
               if (window.history && window.history.length > 1) window.history.back();
             });
           }
 
-          // NEXT — `type="submit"` + `name="_continue"`. Native click
-          // → form submit → POST includes `_continue=Continue` exactly
-          // like DA's own button.
+          // NEXT — submits #daform with name="_continue", exactly
+          // matching DA's own continue button.
           var next = document.createElement('button');
           next.type = 'submit';
+          next.setAttribute('form', 'daform');
           next.name = '_continue';
           next.value = 'Continue';
           next.className = 'sd-btn sd-btn--next';
           next.innerHTML = 'Next <span class="sd-btn-glyph">▶</span>';
 
-          // FINISH — same as Next, just relabelled for the final
-          // screen. Hidden via CSS on the final review screen anyway,
-          // but kept for consistency.
+          // FINISH — same submission as Next, just relabelled. CSS
+          // toggles which one is visible based on `--final` class.
           var finish = document.createElement('button');
           finish.type = 'submit';
+          finish.setAttribute('form', 'daform');
           finish.name = '_continue';
           finish.value = 'Continue';
           finish.className = 'sd-btn sd-btn--finish';
@@ -797,7 +809,7 @@ default screen parts:
           bar.appendChild(prev);
           bar.appendChild(next);
           bar.appendChild(finish);
-          form.appendChild(bar);
+          document.body.appendChild(bar);
         }
 
         function paint() {
