@@ -271,29 +271,37 @@ default screen parts:
         border-left: 3px solid var(--sd-primary);
       }
 
-      /* Status check — appears on EVERY section that has a status
-         (subsections marked visited, groups when ALL children
-         visited). Sits at left: 24px, just right of the twisty.
-         User asked for the check to remain visible even when a group
-         is collapsed — the check on the group row IS that aggregate
-         indicator. */
-      a.danavlink[data-sd-status="complete"]::after {
-        content: "✓";
+      /* Status indicator — every section/subsection gets a green
+         circle on the left:
+           default          → hollow green outline (not yet visited)
+           [data-sd-status="complete"]  → filled green with ✓
+           [data-sd-status="active"]    → hollow blue (currently here)
+         Stays visible even when collapsed so the user can read each
+         section's progress at a glance. */
+      a.danavlink::after {
+        content: "";
         position: absolute; left: 24px; top: 50%;
         transform: translateY(-50%);
-        width: 16px; height: 16px; border-radius: 50%;
-        background: var(--sd-tick); color: #ffffff;
+        width: 14px; height: 14px; border-radius: 50%;
+        background: transparent;
+        border: 2px solid var(--sd-tick);
         font-size: 10px; font-weight: 700;
         display: inline-flex; align-items: center; justify-content: center;
         line-height: 1;
+        box-sizing: border-box;
+      }
+      a.danavlink[data-sd-status="complete"]::after {
+        content: "✓";
+        background: var(--sd-tick);
+        color: #ffffff;
+        border: none;
+        width: 16px; height: 16px;
       }
       a.danavlink[data-sd-status="active"]::after {
         content: "";
-        position: absolute; left: 26px; top: 50%;
-        transform: translateY(-50%);
-        width: 12px; height: 12px; border-radius: 50%;
         background: var(--sd-pane-bg);
         border: 2px solid var(--sd-primary);
+        width: 12px; height: 12px;
       }
       /* Section title bar — first child of #daquestion, extended to
          the pane's full width via negative margins so it bleeds to
@@ -679,10 +687,12 @@ default screen parts:
             }
           });
 
-          // 3. COMPLETION STATUS on every leaf link. Group labels
-          //    (no .daclickable) are skipped — they don't get checks.
+          // 3. COMPLETION STATUS on EVERY nav link (including the
+          //    non-clickable "Completed" label and the group rows
+          //    that don't have subsections). Groups WITH subsections
+          //    get their status overwritten in step 2b below using
+          //    aggregate children-visited logic.
           rail.querySelectorAll('a.danavlink').forEach(function (link) {
-            if (!link.classList.contains('daclickable')) return;
             var key = keyOf(link);
             if (link.classList.contains('active')) {
               link.dataset.sdStatus = 'active';
