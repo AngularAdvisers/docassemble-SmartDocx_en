@@ -486,9 +486,21 @@ default screen parts:
         .sd-btn { padding: 6px 14px; font-size: 12px; }
         body { padding-bottom: 64px !important; }
       }
-      /* Question text — DA emits `<h1 id="daMainQuestion" class="h3">`.
-         Tight spacing so it sits close to the section title bar above
-         and the first form field below. */
+      /* Question text — DA emits
+            <div class="da-page-header">
+              <h1 id="daMainQuestion" class="h3">…</h1>
+              <div class="daclear"></div>
+            </div>
+         DA's bundle.js stylesheet sets `.da-page-header { margin: 40px
+         0 20px }` plus a bottom border — that 40px top margin was the
+         "lots of space at the top" the user saw above every question.
+         Collapse the wrapper's spacing entirely; the section title bar
+         above already provides visual separation. */
+      #daquestion .da-page-header {
+        margin: 0 0 4px 0 !important;
+        padding: 0 !important;
+        border-bottom: 0 !important;
+      }
       #daMainQuestion, #daquestion h1#daMainQuestion {
         font-size: 18px !important;
         font-weight: 600 !important;
