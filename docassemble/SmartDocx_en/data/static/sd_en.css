@@ -1,3 +1,268 @@
+/* ───────────────────────────────────────────────────────────────────
+ * Smart-Docx (en) — HotDocs-style interview theme.
+ *
+ * Targets the Docassemble class set (div.dasections, .daactive,
+ * .daclickable, .danav, .daquestion, …) seen in
+ * docassemble_webapp/static/app/app.css. Layered on top of Docassemble's
+ * Bootstrap 4 chrome — no template overrides, no extra HTML, just CSS.
+ *
+ * What's themed:
+ *   - Section nav (left rail): white panel, indented list, blue active
+ *     highlight with left accent bar, green tick before clickable
+ *     entries (mirrors HotDocs' completed-section indicator).
+ *   - Question pane (right pane): blue title-bar header, HotDocs-style
+ *     form layout, generous spacing.
+ *   - Bottom action bar: Previous / Next / Finish styled in HotDocs
+ *     blue, sticky to the viewport bottom.
+ *   - Progress bar: thin HotDocs green at the bottom.
+ *
+ * What's NOT themed (would need template overrides, deferred):
+ *   - The top-of-page meta-sidebar with "Document preview / Answer
+ *     summary / Help / Return" entries — Docassemble has no native
+ *     placeholders for those.
+ *   - Per-DAList-item nesting (e.g., "Testator's Children → 1, 2, 3").
+ *     Not needed for the Legal Services Agreement (no list inputs);
+ *     would need Pyle's table-screen pattern for templates that have
+ *     DAList sections.
+ *   - True "completed" tracking per section — Docassemble doesn't
+ *     expose a per-section completion state. We use `.daclickable` as
+ *     a proxy ("this section can be jumped to"), which approximates
+ *     HotDocs' UX for a non-progressive interview.
+ * ─────────────────────────────────────────────────────────────────── */
+
+/* HotDocs-ish palette. Defined as CSS custom props so they're easy to
+   tweak in one place if the brand color drifts. */
+:root {
+  --sd-primary: #00578B;          /* HotDocs navy */
+  --sd-primary-hover: #03446e;
+  --sd-accent: #4F92C8;           /* Mid blue */
+  --sd-active-bg: #E5EFF7;        /* Pale blue, currently-selected section */
+  --sd-rail-bg: #F4F6F8;          /* Side rail panel */
+  --sd-pane-bg: #FFFFFF;          /* Question pane */
+  --sd-page-bg: #FAFBFC;          /* Outer page */
+  --sd-border: #DCE1E7;
+  --sd-text: #1F2937;
+  --sd-muted: #64748B;
+  --sd-tick: #2A9D3D;             /* Completed-section green */
+  --sd-progress: #76D156;         /* Bottom progress bar green */
+}
+
+/* Hide Docassemble's top nav — the interview is iframed inside Smart-
+   Docx's own chrome, so its navbar would just duplicate. (Pre-existing
+   behaviour, kept here so the file is self-contained.) */
 .navbar {
-    display: none;
+  display: none;
+}
+
+body {
+  background: var(--sd-page-bg);
+  color: var(--sd-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ─── Section navigation rail (left) ─────────────────────────────── */
+
+div.danavdiv {
+  /* Docassemble's default 30px top margin sits the rail awkwardly; HotDocs
+     starts the outline flush against the document title bar. */
+  margin-top: 0;
+  padding: 16px 0;
+  background: var(--sd-rail-bg);
+  border-right: 1px solid var(--sd-border);
+  min-height: 100vh;
+}
+
+div.dasections {
+  line-height: 1.4;
+}
+
+div.dasections .btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sd-text);
+  padding: 10px 16px 10px 28px;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  border-left: 3px solid transparent;
+  position: relative;
+  white-space: normal;
+}
+
+/* Tick mark before clickable sections (proxy for "in the user's outline,
+   reachable by click"). Matches HotDocs' green-circle check. We use a
+   pseudo-element so we don't need extra HTML; ::before sits in the
+   28px left padding reserved by .btn. */
+div.dasections a.btn.daclickable::before {
+  content: "✓";
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--sd-tick);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+div.dasections a.btn.daclickable:hover {
+  background: rgba(0, 87, 139, 0.06);
+  color: var(--sd-primary);
+  text-decoration: none;
+}
+
+/* Active (currently-displayed) section. Docassemble adds .daactive to
+   the matching button. Override the default yellow in app.css with a
+   HotDocs-style pale-blue fill + left accent bar. */
+div.dasections .btn.daactive,
+div.dasections .daactive {
+  background: var(--sd-active-bg) !important;
+  color: var(--sd-primary) !important;
+  font-weight: 600;
+  border-left: 3px solid var(--sd-primary);
+}
+
+/* Sub-items (DAList children inside .dainlineinside) get an extra indent
+   so they read as a hierarchy. Already present in this interview's
+   sections list as none, but kept for templates that add DAList nesting
+   later. */
+div.dasections div.dainlineinside .btn {
+  padding-left: 48px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--sd-muted);
+}
+
+div.dasections div.dainlineinside a.btn.daclickable::before {
+  left: 28px;
+  width: 14px;
+  height: 14px;
+  font-size: 10px;
+}
+
+/* ─── Question pane (right) ─────────────────────────────────────── */
+
+#dadiv,
+.daquestion {
+  background: var(--sd-pane-bg);
+  padding: 0;
+}
+
+/* Section title — Docassemble emits the question's section name above
+   the question text. Style as HotDocs' top blue-grey bar. */
+.dasectionheading,
+h1.daquestionheading {
+  background: var(--sd-active-bg);
+  color: var(--sd-primary);
+  padding: 14px 24px;
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--sd-border);
+}
+
+/* Form fields — generous padding, slightly larger inputs. */
+.daquestion .form-control,
+.daquestion input[type="text"],
+.daquestion input[type="email"],
+.daquestion input[type="number"],
+.daquestion input[type="date"],
+.daquestion select,
+.daquestion textarea {
+  border: 1px solid var(--sd-border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.daquestion .form-control:focus,
+.daquestion input:focus,
+.daquestion select:focus,
+.daquestion textarea:focus {
+  border-color: var(--sd-primary);
+  box-shadow: 0 0 0 3px rgba(0, 87, 139, 0.12);
+  outline: none;
+}
+
+.daquestion label {
+  font-weight: 500;
+  color: var(--sd-text);
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+/* ─── Bottom action bar (Previous / Next / Finish) ──────────────── */
+
+.danavlinkbuttons,
+.daquestion .btn-da-primary,
+.daquestion .btn-primary {
+  background: var(--sd-primary);
+  border-color: var(--sd-primary);
+  color: #ffffff;
+  font-weight: 500;
+  padding: 8px 20px;
+  border-radius: 4px;
+}
+
+.daquestion .btn-primary:hover,
+.daquestion .btn-da-primary:hover {
+  background: var(--sd-primary-hover);
+  border-color: var(--sd-primary-hover);
+}
+
+.daquestion .btn-secondary,
+.daquestion .btn-da-secondary {
+  background: #ffffff;
+  border: 1px solid var(--sd-border);
+  color: var(--sd-text);
+  font-weight: 500;
+  padding: 8px 20px;
+  border-radius: 4px;
+}
+
+.daquestion .btn-secondary:hover {
+  background: var(--sd-rail-bg);
+  border-color: var(--sd-accent);
+  color: var(--sd-primary);
+}
+
+/* ─── Progress bar (HotDocs thin green stripe at the bottom) ────── */
+
+div.daprogress .progress {
+  height: 4px;
+  background: transparent;
+  border-radius: 0;
+}
+
+div.daprogress .progress-bar {
+  background: var(--sd-progress);
+}
+
+/* ─── Mobile: collapse the rail above the question pane ─────────── */
+
+@media (max-width: 991.98px) {
+  div.danavdiv {
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--sd-border);
+    padding: 8px 0;
+  }
+  div.dasections .btn {
+    padding: 8px 12px 8px 28px;
+    font-size: 13px;
+  }
 }
