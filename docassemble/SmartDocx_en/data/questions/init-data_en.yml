@@ -726,80 +726,78 @@ default screen parts:
         }
 
         // 5. BOTTOM ACTION BAR — Previous / Next / Finish.
-        //    Drives DA's existing buttons (which we hide via CSS) so
-        //    form submission and back navigation work exactly as DA
-        //    intends; we just give the user a HotDocs-style three-button
-        //    surface instead of DA's default Back/Continue pair.
+        //    Our buttons ARE the form submitters: appended INSIDE
+        //    DA's form with `type="submit"` and the same `name=`
+        //    attributes DA's own buttons use (`_continue`,
+        //    `_back_button`). When clicked, the browser submits the
+        //    form natively, posting the relevant `_continue=…` /
+        //    `_back_button=…` form field along with all answer fields.
+        //    DA's server-side handler treats this identically to a
+        //    click on its own buttons — same save, same advance.
+        //
+        //    Earlier proxy approaches (clicking DA's hidden buttons
+        //    via jQuery.trigger / dispatchEvent / requestSubmit) were
+        //    fragile: jQuery's .trigger('click') fires bound handlers
+        //    but skips the default form-submit behavior, and clip-rect
+        //    / off-screen positioning broke the submitter identity.
+        //    Native form submission via real submit buttons sidesteps
+        //    every one of those gotchas.
         function injectBottomBar(isFinal) {
           // Re-render every page load — DA does full-page reloads so
           // there's no stale-state risk; we just clean any prior bar.
           var existing = document.querySelector('.sd-bottom-bar');
           if (existing) existing.remove();
 
+          var form = document.querySelector('form#daform, form[name="daform"], #daquestion form, form');
+          if (!form) return;
+
           var bar = document.createElement('div');
           bar.className = 'sd-bottom-bar';
           if (isFinal) bar.classList.add('sd-bottom-bar--final');
 
-          // DA's actual button IDs (verified by inspecting the
-          // rendered HTML response): `#da-continue-button` for next,
-          // `#dabackToQuestion` for back. Older selectors kept as
-          // fallbacks for forward/backward compat with other DA
-          // versions, but the IDs above are what 2026 ships.
-          var CONT_SEL = '#da-continue-button, button[name="_continue"], #daQuestionSubmit, button[type="submit"]';
-          var BACK_SEL = '#dabackToQuestion, button[name="_back_button"], a.danavlinkprevious, #daPageBack';
-
-          // Submit the form via DA's native button. DA's bundle.js
-          // reads a global `daSubmitter` to know which button drove
-          // the form, so set it explicitly first. Then trigger the
-          // click via jQuery if present (DA always loads jQuery and
-          // binds its continue/back handlers via `$.on('click', …)`,
-          // which only fire reliably from a jQuery-triggered event),
-          // falling back to a native click for resilience.
-          function submitVia(button) {
-            if (!button) return;
-            try { window.daSubmitter = button; } catch (e) {}
-            if (window.jQuery) {
-              try { window.jQuery(button).trigger('click'); return; } catch (e) {}
-            }
-            try { button.click(); return; } catch (e) {}
-            var form = button.form || button.closest('form');
-            if (form && typeof form.requestSubmit === 'function') {
-              form.requestSubmit(button);
-            } else if (form && typeof form.submit === 'function') {
-              form.submit();
-            }
-          }
-
+          // PREVIOUS — `type="submit"` + `name="_back_button"` so
+          // DA's POST handler routes this as a back-navigation. Only
+          // shown when DA actually rendered a Back button on this
+          // screen (first question has none). Fall back to history.back
+          // if no Back exists in DOM.
           var prev = document.createElement('button');
-          prev.type = 'button';
+          prev.type = 'submit';
+          prev.name = '_back_button';
+          prev.value = 'Back';
           prev.className = 'sd-btn sd-btn--prev';
           prev.innerHTML = '<span class="sd-btn-glyph">◀</span> Previous';
-          prev.addEventListener('click', function () {
-            var back = document.querySelector(BACK_SEL);
-            if (back) submitVia(back);
-            else if (window.history && window.history.length > 1) window.history.back();
-          });
+          if (!document.querySelector('#dabackToQuestion, button[name="_back_button"]')) {
+            prev.type = 'button';
+            prev.removeAttribute('name');
+            prev.addEventListener('click', function () {
+              if (window.history && window.history.length > 1) window.history.back();
+            });
+          }
 
+          // NEXT — `type="submit"` + `name="_continue"`. Native click
+          // → form submit → POST includes `_continue=Continue` exactly
+          // like DA's own button.
           var next = document.createElement('button');
-          next.type = 'button';
+          next.type = 'submit';
+          next.name = '_continue';
+          next.value = 'Continue';
           next.className = 'sd-btn sd-btn--next';
           next.innerHTML = 'Next <span class="sd-btn-glyph">▶</span>';
-          next.addEventListener('click', function () {
-            submitVia(document.querySelector(CONT_SEL));
-          });
 
+          // FINISH — same as Next, just relabelled for the final
+          // screen. Hidden via CSS on the final review screen anyway,
+          // but kept for consistency.
           var finish = document.createElement('button');
-          finish.type = 'button';
+          finish.type = 'submit';
+          finish.name = '_continue';
+          finish.value = 'Continue';
           finish.className = 'sd-btn sd-btn--finish';
           finish.innerHTML = '<span class="sd-btn-glyph">✓</span> Finish';
-          finish.addEventListener('click', function () {
-            submitVia(document.querySelector(CONT_SEL));
-          });
 
           bar.appendChild(prev);
           bar.appendChild(next);
           bar.appendChild(finish);
-          document.body.appendChild(bar);
+          form.appendChild(bar);
         }
 
         function paint() {
@@ -810,11 +808,11 @@ default screen parts:
           if (isFinal) document.body.classList.add('sd-screen-final');
           else document.body.classList.remove('sd-screen-final');
 
-          // Only inject the action bar on screens that have a Continue
-          // button — skips DA's standalone signature/playground pages.
-          // Use the same selector list as the bar itself so this gate
-          // matches what we'll actually drive via .click().
-          if (document.querySelector('#da-continue-button, button[name="_continue"], #daQuestionSubmit, button[type="submit"]')) {
+          // Only inject the action bar on screens that have DA's
+          // own continue button — skips standalone signature /
+          // playground pages where DA wouldn't accept a `_continue=`
+          // submit anyway.
+          if (document.querySelector('#da-continue-button, button[name="_continue"]')) {
             injectBottomBar(isFinal);
           }
         }
