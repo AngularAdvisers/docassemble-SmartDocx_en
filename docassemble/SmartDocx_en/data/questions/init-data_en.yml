@@ -124,6 +124,13 @@ default screen parts:
         border-bottom: 1px solid var(--sd-border);
       }
       .sd-outline-header:hover { color: var(--sd-primary); }
+      .sd-outline-icon {
+        display: inline-block !important;
+        margin-right: 8px;
+        font-size: 14px;
+        color: var(--sd-muted);
+        width: 16px; text-align: center;
+      }
       .sd-outline-title { flex: 1; }
       .sd-outline-chev {
         margin-left: auto;
@@ -183,10 +190,10 @@ default screen parts:
          toggler arrows after page load and earlier targeted rules
          (`.toggler { display: none }`, `a.danavlink > *`) didn't
          catch every variant. Ours are kept via a class-based
-         exception list. */
-      div.danavdiv span:not(.sd-outline-chev):not(.sd-outline-title),
-      div.danavdiv i,
-      div.danavdiv svg,
+         exception list (.sd-outline-* classes). */
+      div.danavdiv span:not(.sd-outline-chev):not(.sd-outline-title):not(.sd-outline-icon),
+      div.danavdiv i:not(.sd-outline-icon),
+      div.danavdiv svg:not(.sd-outline-icon),
       div.danavdiv img,
       a.danavlink > * {
         display: none !important;
@@ -571,10 +578,14 @@ default screen parts:
           if (!rail) return null;
 
           // 1. OUTLINE HEADER — inject once.
+          //    Layout: [list-ul icon] [Outline title]   [collapse chevron]
           if (!rail.parentElement.querySelector('.sd-outline-header')) {
             var hdr = document.createElement('div');
             hdr.className = 'sd-outline-header';
-            hdr.innerHTML = '<span class="sd-outline-chev">▾</span><span class="sd-outline-title">Outline</span>';
+            hdr.innerHTML =
+              '<i class="fa-solid fa-list-ul sd-outline-icon" aria-hidden="true"></i>' +
+              '<span class="sd-outline-title">Outline</span>' +
+              '<span class="sd-outline-chev">▾</span>';
             hdr.addEventListener('click', function () {
               var collapsed = rail.parentElement.classList.toggle('sd-rail-collapsed');
               hdr.querySelector('.sd-outline-chev').textContent = collapsed ? '▸' : '▾';
