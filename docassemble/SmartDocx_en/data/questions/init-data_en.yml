@@ -86,92 +86,83 @@ default screen parts:
          Old selectors (.dasections, .btn, .daactive, .dainlineinside)
          don't match this DA version at all — that's why every prior
          theming pass was a no-op for the actual rail. */
+      /* MINIMAL CSS — let DA's default flex layout drive size, position,
+         and width. Only override colors / fonts / ::before-::after for
+         HotDocs cosmetics. Heavy `!important` on display/border/width
+         broke the rail's flex layout in 1.0.42 and hid sections; this
+         pass goes back to non-aggressive overrides. */
+
       div.danavdiv {
-        margin: 0; padding: 0;
         background: var(--sd-rail-bg);
         border-right: 1px solid var(--sd-border);
-        min-height: 100vh;
       }
-      div.danavdiv.sd-rail-collapsed nav.danavlinks,
-      div.danavdiv.sd-rail-collapsed > *:not(.sd-outline-header) {
-        display: none;
-      }
-      nav.danavlinks.danav-vertical {
-        padding: 4px 0 8px 0;
-        line-height: 1.35;
-      }
+
+      /* Each section link — color + indent for chevron / check. No
+         display/width overrides — DA's `nav-pills.flex-column` already
+         stacks them correctly. */
       a.danavlink {
-        display: flex !important; align-items: center;
-        width: 100%; text-align: left;
-        font-size: 13px; font-weight: 500;
-        color: var(--sd-text) !important;
-        padding: 6px 14px 6px 30px;
-        border-radius: 0 !important; background: transparent !important;
-        border: none !important; border-left: 3px solid transparent !important;
-        position: relative; white-space: normal;
-        text-decoration: none !important;
+        color: var(--sd-text);
+        padding-left: 32px !important;  /* room for ::before chevron and ::after check */
       }
-      a.danavlink:hover {
-        background: rgba(0, 87, 139, 0.06) !important;
-        color: var(--sd-primary) !important;
-      }
-      [data-bs-theme="dark"] a.danavlink:hover {
-        background: rgba(107, 168, 221, 0.08) !important;
-      }
-      /* GROUP labels — non-clickable (no .daclickable, no data-key) —
-         get a static downward chevron and a default cursor. */
+      a.danavlink:hover { color: var(--sd-primary); }
+
+      /* GROUP labels — non-clickable, decorative downward chevron. */
       a.danavlink:not(.daclickable) {
-        font-weight: 600 !important;
-        cursor: default !important;
-        padding-left: 26px;
+        font-weight: 700;
+        cursor: default;
       }
       a.danavlink:not(.daclickable)::before {
-        content: ""; position: absolute; left: 10px; top: 50%;
+        content: ""; position: absolute; left: 14px; top: 50%;
         width: 0; height: 0; margin-top: -3px;
         border-style: solid; border-width: 5px 4px 0 4px;
         border-color: var(--sd-muted) transparent transparent transparent;
       }
-      /* OVERRIDE DA's auto-collapse — show every group always.
-         DA hides non-active groups via inline style="display:none" plus
-         .danotshowing. !important + display:flex beats the inline. */
-      div.danavnested,
-      div.danavnested.danotshowing {
-        display: flex !important;
+
+      /* Make every nested group visible — override DA's auto-collapse.
+         Don't force display:flex; just unhide. DA's class .danotshowing
+         applies display:none; !important wins. */
+      div.danavnested {
+        display: block !important;
       }
-      div.danavnested.danav-vertical { flex-direction: column; }
-      /* SUBSECTION links: indent + smaller font */
+      /* DA's nested container is already a flex container via its own
+         classes. Don't fight it. Just unhide. */
+
+      /* SUBSECTION links: smaller font + muted color. */
       div.danavnested a.danavlink {
-        padding-left: 38px;
         font-size: 12px;
-        font-weight: 400 !important;
-        color: var(--sd-muted) !important;
+        font-weight: 400;
+        color: var(--sd-muted);
       }
-      /* Active-section highlight */
+
+      /* Active section highlight — pale blue + navy + left bar. */
       a.danavlink.active {
-        background: var(--sd-active-bg) !important;
-        color: var(--sd-primary) !important;
-        font-weight: 600 !important;
-        border-left: 3px solid var(--sd-primary) !important;
+        background: var(--sd-active-bg);
+        color: var(--sd-primary);
+        font-weight: 600;
+        border-left: 3px solid var(--sd-primary);
       }
-      /* Completion check (✓) on visited subsections */
-      a.danavlink[data-sd-status="complete"]::after,
-      a.danavlink[data-sd-status="active"]::after {
-        content: ""; position: absolute; left: 14px; top: 50%;
+
+      /* Green ✓ check after the link text on visited subsections. */
+      a.danavlink[data-sd-status="complete"]::after {
+        content: "✓";
+        position: absolute; left: 14px; top: 50%;
         transform: translateY(-50%);
         width: 14px; height: 14px; border-radius: 50%;
+        background: var(--sd-tick); color: #ffffff;
         font-size: 10px; font-weight: 700;
         display: inline-flex; align-items: center; justify-content: center;
         line-height: 1;
       }
-      a.danavlink[data-sd-status="complete"]::after {
-        content: "✓"; background: var(--sd-tick); color: #ffffff;
-      }
+      /* Hollow circle for the active leaf (visually distinct from completed). */
       a.danavlink[data-sd-status="active"]::after {
-        content: ""; background: var(--sd-pane-bg);
+        content: "";
+        position: absolute; left: 16px; top: 50%;
+        transform: translateY(-50%);
+        width: 10px; height: 10px; border-radius: 50%;
+        background: var(--sd-pane-bg);
         border: 2px solid var(--sd-primary);
-        width: 12px; height: 12px;
       }
-      /* Don't draw the leaf check on group labels */
+      /* Don't draw the leaf check on group labels (they have a chevron). */
       a.danavlink:not(.daclickable)[data-sd-status]::after { display: none; }
       .sd-section-title-bar {
         background: var(--sd-active-bg); color: var(--sd-primary);
@@ -266,12 +257,9 @@ default screen parts:
       div.daprogress .progress-bar { background: var(--sd-progress); }
       @media (max-width: 991.98px) {
         div.danavdiv {
-          min-height: auto; border-right: 0;
+          border-right: 0;
           border-bottom: 1px solid var(--sd-border);
-          padding: 0;
         }
-        a.danavlink { padding: 7px 12px 7px 30px; font-size: 13px; }
-        div.danavnested a.danavlink { padding-left: 38px; font-size: 12px; }
         .sd-section-title-bar { padding: 12px 16px; font-size: 15px; }
         .sd-bottom-bar { padding: 8px 16px; }
         .sd-btn { padding: 6px 14px; font-size: 12px; }
@@ -279,23 +267,6 @@ default screen parts:
       }
       @media (min-width: 992px) {
         .sd-outline-header { padding: 10px 14px; font-size: 12px; }
-        div.danavdiv { padding: 0; }
-        a.danavlink { padding: 5px 14px 5px 28px; font-size: 12px; }
-        a.danavlink:not(.daclickable) { padding-left: 22px; }
-        a.danavlink[data-sd-status="complete"]::after,
-        a.danavlink[data-sd-status="active"]::after {
-          left: 11px; width: 12px; height: 12px; font-size: 9px;
-        }
-        a.danavlink[data-sd-status="active"]::after {
-          width: 10px; height: 10px;
-        }
-        div.danavnested a.danavlink {
-          padding-left: 34px; font-size: 12px;
-        }
-        div.danavnested a.danavlink[data-sd-status="complete"]::after,
-        div.danavnested a.danavlink[data-sd-status="active"]::after {
-          left: 18px; width: 11px; height: 11px; font-size: 8px;
-        }
         .sd-section-title-bar { padding: 10px 20px; margin: 0 0 12px 0; font-size: 14px; }
         .daquestion .form-control,
         .daquestion input[type="text"],
