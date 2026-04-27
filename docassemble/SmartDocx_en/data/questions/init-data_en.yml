@@ -471,6 +471,20 @@ default screen parts:
         border-color: var(--sd-primary-hover); color: #ffffff;
       }
       .sd-btn-glyph { font-size: 11px; }
+      /* Disabled state — used on Previous when the user is at the
+         first leaf, so the button visibly signals "nothing to do."
+         Override hover so it doesn't suggest interactivity. */
+      .sd-btn:disabled,
+      .sd-btn--disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .sd-btn:disabled:hover,
+      .sd-btn--disabled:hover {
+        background: var(--sd-button-secondary-bg);
+        border-color: var(--sd-border);
+        color: var(--sd-text);
+      }
       .sd-bottom-bar.sd-bottom-bar--final .sd-btn--next { display: none; }
       div.daprogress .progress {
         height: 4px; background: transparent; border-radius: 0;
@@ -887,42 +901,40 @@ default screen parts:
           prev.type = 'button';
           prev.className = 'sd-btn sd-btn--prev';
           prev.innerHTML = '<span class="sd-btn-glyph">◀</span> Previous';
-          prev.addEventListener('click', function () {
-            // Mirror the rail-querying logic from decorateRail() so
-            // we end up with the same vertical nav even if DA changes
-            // its wrapper classes between releases.
-            var railEl =
-              document.querySelector('div.danavdiv nav.danavlinks.danav-vertical') ||
-              document.querySelector('div.danavdiv .danav-vertical.danavlinks') ||
-              document.querySelector('div.danavdiv .nav.danav-vertical') ||
-              document.querySelector('div.danavdiv');
-            if (railEl) {
-              var leaves = railEl.querySelectorAll('a.danavlink.daclickable');
-              var activeIdx = -1;
-              for (var i = 0; i < leaves.length; i++) {
-                if (leaves[i].classList.contains('active')) {
-                  activeIdx = i;
-                  break;
-                }
-              }
-              if (activeIdx > 0) {
-                // DA binds `.danavlinks a.daclickable` clicks to
-                // `da_action_perform("_da_priority_action", …)`, so a
-                // native click() on the previous leaf triggers a real
-                // section jump.
-                leaves[activeIdx - 1].click();
-                return;
-              }
-            }
-            // No previous leaf — fall back to DA's back-one form,
-            // then browser history.
-            var dabackForm = document.getElementById('dabackbutton');
-            if (dabackForm && typeof dabackForm.submit === 'function') {
-              dabackForm.submit();
-              return;
-            }
-            if (window.history && window.history.length > 1) window.history.back();
-          });
+
+          // Mirror the rail-querying logic from decorateRail() so we
+          // end up with the same vertical nav even if DA changes its
+          // wrapper classes between releases.
+          var railEl =
+            document.querySelector('div.danavdiv nav.danavlinks.danav-vertical') ||
+            document.querySelector('div.danavdiv .danav-vertical.danavlinks') ||
+            document.querySelector('div.danavdiv .nav.danav-vertical') ||
+            document.querySelector('div.danavdiv');
+          var leaves = railEl ? railEl.querySelectorAll('a.danavlink.daclickable') : [];
+          var activeIdx = -1;
+          for (var i = 0; i < leaves.length; i++) {
+            if (leaves[i].classList.contains('active')) { activeIdx = i; break; }
+          }
+
+          if (activeIdx > 0) {
+            // DA binds `.danavlinks a.daclickable` clicks to
+            // `da_action_perform("_da_priority_action", …)`, so a
+            // native click() on the previous leaf triggers a real
+            // section jump.
+            var prevLeaf = leaves[activeIdx - 1];
+            prev.addEventListener('click', function () { prevLeaf.click(); });
+          } else {
+            // First leaf (or rail not found): there is no previous
+            // section, so Previous must do nothing. Earlier we fell
+            // back to DA's `#dabackbutton` here, but `_back_one` after
+            // section-jump force_asks pushed the user FORWARD in the
+            // visible flow — the "press Previous on top, jumps to
+            // Next" bug. Render the button as disabled so the user
+            // gets visual feedback that there's nowhere to go back to.
+            prev.disabled = true;
+            prev.classList.add('sd-btn--disabled');
+            prev.setAttribute('aria-disabled', 'true');
+          }
           center.appendChild(prev);
 
           if (isSignature) {
