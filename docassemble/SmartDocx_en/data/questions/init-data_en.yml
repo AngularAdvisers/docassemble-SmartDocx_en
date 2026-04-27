@@ -375,11 +375,13 @@ default screen parts:
       #daquestion .dafieldpart { padding: 0 !important; }
       /* Buttons row: keep flush left below the form. */
       #daquestion .da-button-set { padding: 0 !important; }
-      /* Hide DA's native Continue / Back. Actual IDs are
-         `#da-continue-button` and `#dabackToQuestion` — earlier
-         selectors `button[name="_continue"]` / `#daQuestionSubmit`
-         were wrong (left over from older DA versions) which was why
-         our bar never replaced the visible Continue. */
+      /* Push DA's native Continue / Back off-screen — kept clickable
+         (so .click() and form.requestSubmit() still trigger DA's
+         submit handlers) but invisible. The clip-rect approach used
+         previously was making submit-handlers swallow the click on
+         some browsers, so the user's answers weren't being POSTed.
+         Off-screen left:-9999px keeps them in normal flow + fully
+         interactive. */
       .danavlinkbuttons,
       #da-continue-button,
       #dabackToQuestion,
@@ -388,11 +390,9 @@ default screen parts:
       #daQuestionSubmit,
       #daPageBack {
         position: absolute !important;
-        width: 1px !important; height: 1px !important;
-        padding: 0 !important; margin: -1px !important;
-        overflow: hidden !important;
-        clip: rect(0, 0, 0, 0) !important;
-        border: 0 !important; white-space: nowrap !important;
+        left: -9999px !important;
+        top: 0 !important;
+        opacity: 0 !important;
       }
       .sd-bottom-bar {
         position: fixed; bottom: 0; left: 0; right: 0;
@@ -755,22 +755,21 @@ default screen parts:
           var CONT_SEL = '#da-continue-button, button[name="_continue"], #daQuestionSubmit, button[type="submit"]';
           var BACK_SEL = '#dabackToQuestion, button[name="_back_button"], a.danavlinkprevious, #daPageBack';
 
-          // Submit the form via the requested button. `form.requestSubmit
-          // (button)` is the modern, reliable way to submit — it fires
-          // native validation and the submit-event handlers DA wires up
-          // (which `.click()` on a clip-rect-hidden button sometimes
-          // skips, leaving the form unsubmitted and the user wondering
-          // why their answers don't save). Falls back to plain
-          // `.click()` then `form.submit()` for older browsers.
+          // Submit the form via the requested button. Since DA's
+          // native button is off-screen (left:-9999px) but visible
+          // and in flow, plain `.click()` correctly fires DA's
+          // submit-handlers (those handlers do the actual save —
+          // skipping them was why the user's answers weren't
+          // persisting). Fallbacks for older browsers.
           function submitVia(button) {
             if (!button) return;
+            try { button.click(); return; } catch (e) {}
             var form = button.form || button.closest('form');
             if (form && typeof form.requestSubmit === 'function') {
               form.requestSubmit(button);
-              return;
+            } else if (form && typeof form.submit === 'function') {
+              form.submit();
             }
-            try { button.click(); return; } catch (e) {}
-            if (form && typeof form.submit === 'function') form.submit();
           }
 
           var prev = document.createElement('button');
