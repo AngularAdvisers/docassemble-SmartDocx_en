@@ -274,30 +274,30 @@ default screen parts:
         font-size: 16px; font-weight: 600;
         border-bottom: 1px solid var(--sd-border);
       }
-      #dadiv, .daquestion {
+      #dadiv, #daquestion {
         background: var(--sd-pane-bg); color: var(--sd-text); padding: 0;
       }
-      .daquestion .form-control,
-      .daquestion input[type="text"],
-      .daquestion input[type="email"],
-      .daquestion input[type="number"],
-      .daquestion input[type="date"],
-      .daquestion select,
-      .daquestion textarea {
+      #daquestion .form-control,
+      #daquestion input[type="text"],
+      #daquestion input[type="email"],
+      #daquestion input[type="number"],
+      #daquestion input[type="date"],
+      #daquestion select,
+      #daquestion textarea {
         background: var(--sd-input-bg); color: var(--sd-input-text);
         border: 1px solid var(--sd-border); border-radius: 4px;
         padding: 8px 12px; font-size: 14px;
         transition: border-color 0.15s, box-shadow 0.15s;
       }
-      .daquestion .form-control:focus,
-      .daquestion input:focus,
-      .daquestion select:focus,
-      .daquestion textarea:focus {
+      #daquestion .form-control:focus,
+      #daquestion input:focus,
+      #daquestion select:focus,
+      #daquestion textarea:focus {
         border-color: var(--sd-primary);
         box-shadow: 0 0 0 3px rgba(0, 87, 139, 0.18);
         outline: none;
       }
-      .daquestion label {
+      #daquestion label {
         font-weight: 500; color: var(--sd-text);
         margin-bottom: 6px; font-size: 13px;
       }
@@ -308,13 +308,13 @@ default screen parts:
          `col-md-8` (input). With the rail eating 240px the inputs
          end up pushed far to the right inside the pane. Override the
          row to a block layout so each field reads top-down. */
-      .daquestion .da-field-container.row,
-      .daquestion .da-form-group.row {
+      #daquestion .da-field-container.row,
+      #daquestion .da-form-group.row {
         display: block !important;
         margin: 0 0 14px 0 !important;
       }
-      .daquestion .da-field-container.row > [class*="col-"],
-      .daquestion .da-form-group.row > [class*="col-"] {
+      #daquestion .da-field-container.row > [class*="col-"],
+      #daquestion .da-form-group.row > [class*="col-"] {
         flex: none !important;
         width: 100% !important;
         max-width: 100% !important;
@@ -322,18 +322,18 @@ default screen parts:
       }
       /* Labels: left-aligned (was right-aligned via .datext-right),
          block-level so they sit on their own line above the input. */
-      .daquestion .da-field-container label.datext-right,
-      .daquestion .da-form-group label.datext-right,
-      .daquestion .da-field-container label.col-form-label,
-      .daquestion .da-form-group label.col-form-label {
+      #daquestion .da-field-container label.datext-right,
+      #daquestion .da-form-group label.datext-right,
+      #daquestion .da-field-container label.col-form-label,
+      #daquestion .da-form-group label.col-form-label {
         text-align: left !important;
         display: block;
       }
       /* Pane container — top padding only, no horizontal padding on
          field rows so inputs hug the section title bar's left edge. */
-      .daquestion .dafieldpart { padding: 0 !important; }
+      #daquestion .dafieldpart { padding: 0 !important; }
       /* Buttons row: keep flush left below the form. */
-      .daquestion .da-button-set { padding: 0 !important; }
+      #daquestion .da-button-set { padding: 0 !important; }
       /* Hide DA's native Continue / Back. Actual IDs are
          `#da-continue-button` and `#dabackToQuestion` — earlier
          selectors `button[name="_continue"]` / `#daQuestionSubmit`
@@ -405,18 +405,18 @@ default screen parts:
       @media (min-width: 992px) {
         .sd-outline-header { padding: 10px 14px; font-size: 12px; }
         .sd-section-title-bar { padding: 10px 20px; margin: 0 0 12px 0; font-size: 14px; }
-        .daquestion .form-control,
-        .daquestion input[type="text"],
-        .daquestion input[type="email"],
-        .daquestion input[type="number"],
-        .daquestion input[type="date"],
-        .daquestion select,
-        .daquestion textarea {
+        #daquestion .form-control,
+        #daquestion input[type="text"],
+        #daquestion input[type="email"],
+        #daquestion input[type="number"],
+        #daquestion input[type="date"],
+        #daquestion select,
+        #daquestion textarea {
           padding: 4px 8px; font-size: 13px;
           height: calc(1.5em + 0.5rem + 2px);
         }
-        .daquestion textarea { height: auto; }
-        .daquestion label { margin-bottom: 4px; font-size: 12px; }
+        #daquestion textarea { height: auto; }
+        #daquestion label { margin-bottom: 4px; font-size: 12px; }
         .sd-bottom-bar { padding: 8px 24px; }
         .sd-btn { padding: 5px 14px; font-size: 12px; }
         div.daprogress .progress { height: 3px; }
