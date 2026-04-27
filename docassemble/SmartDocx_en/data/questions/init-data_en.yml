@@ -755,13 +755,31 @@ default screen parts:
           var CONT_SEL = '#da-continue-button, button[name="_continue"], #daQuestionSubmit, button[type="submit"]';
           var BACK_SEL = '#dabackToQuestion, button[name="_back_button"], a.danavlinkprevious, #daPageBack';
 
+          // Submit the form via the requested button. `form.requestSubmit
+          // (button)` is the modern, reliable way to submit — it fires
+          // native validation and the submit-event handlers DA wires up
+          // (which `.click()` on a clip-rect-hidden button sometimes
+          // skips, leaving the form unsubmitted and the user wondering
+          // why their answers don't save). Falls back to plain
+          // `.click()` then `form.submit()` for older browsers.
+          function submitVia(button) {
+            if (!button) return;
+            var form = button.form || button.closest('form');
+            if (form && typeof form.requestSubmit === 'function') {
+              form.requestSubmit(button);
+              return;
+            }
+            try { button.click(); return; } catch (e) {}
+            if (form && typeof form.submit === 'function') form.submit();
+          }
+
           var prev = document.createElement('button');
           prev.type = 'button';
           prev.className = 'sd-btn sd-btn--prev';
           prev.innerHTML = '<span class="sd-btn-glyph">◀</span> Previous';
           prev.addEventListener('click', function () {
             var back = document.querySelector(BACK_SEL);
-            if (back) back.click();
+            if (back) submitVia(back);
             else if (window.history && window.history.length > 1) window.history.back();
           });
 
@@ -770,8 +788,7 @@ default screen parts:
           next.className = 'sd-btn sd-btn--next';
           next.innerHTML = 'Next <span class="sd-btn-glyph">▶</span>';
           next.addEventListener('click', function () {
-            var cont = document.querySelector(CONT_SEL);
-            if (cont) cont.click();
+            submitVia(document.querySelector(CONT_SEL));
           });
 
           var finish = document.createElement('button');
@@ -779,8 +796,7 @@ default screen parts:
           finish.className = 'sd-btn sd-btn--finish';
           finish.innerHTML = '<span class="sd-btn-glyph">✓</span> Finish';
           finish.addEventListener('click', function () {
-            var cont = document.querySelector(CONT_SEL);
-            if (cont) cont.click();
+            submitVia(document.querySelector(CONT_SEL));
           });
 
           bar.appendChild(prev);
