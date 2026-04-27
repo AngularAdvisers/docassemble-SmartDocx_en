@@ -391,10 +391,12 @@ default screen parts:
       .dasigbuttons {
         display: none !important;
       }
-      /* Signature: defensively size the canvas host so DA's signature
-         library has measurable dimensions to draw into. Without an
-         explicit min-height the canvas can render 0px tall on some
-         viewports and the user sees an "empty" signature page. */
+      /* Signature: ensure the canvas host's display chain is intact.
+         The actual canvas dimensions are set by DA's bundle.js (and
+         then resized by our JS post-init — see `expandSignatureCanvas`
+         below). Don't pin a min-height here: any container height
+         that exceeds the canvas pixel grid creates a "dead zone" the
+         user can click in but can't sign on. */
       #dasigpage,
       #dasigtoppart,
       #dasigmidpart,
@@ -404,11 +406,14 @@ default screen parts:
         width: 100%;
       }
       #dasigcontent {
-        min-height: 260px;
-        background: var(--sd-input-bg);
+        position: relative;
+      }
+      #dasigcanvas {
         border: 1px dashed var(--sd-border);
         border-radius: 4px;
-        position: relative;
+        background: var(--sd-input-bg);
+        touch-action: none;
+        display: block;
       }
       /* DA pads the body with a tall stack of <br>s on mobile to
          leave room for its sticky signature header. We're hiding
@@ -903,6 +908,54 @@ default screen parts:
           document.body.appendChild(bar);
         }
 
+        // 6. SIGNATURE CANVAS RESIZER.
+        //    DA's `daNewCanvas` computes cheight = cwidth × 0.4 then
+        //    caps to max 275px. On narrower viewports / iframes this
+        //    leaves the canvas pixel grid much shorter than the host
+        //    container, creating a "dead zone" where the user clicks
+        //    but no signature registers. We override DA's sizing
+        //    after init: resize the canvas attributes to a generous
+        //    height (≈55% of viewport, min 380px), then re-create the
+        //    SignaturePad instance against the resized canvas so
+        //    drawing coordinates align with the visible area.
+        function expandSignatureCanvas() {
+          if (!document.getElementById('dasigform')) return;
+          var canvas = document.getElementById('dasigcanvas');
+          var content = document.getElementById('dasigcontent');
+          if (!canvas || !content || !window.SignaturePad) {
+            // DA hasn't initialized the canvas yet; try again shortly.
+            return false;
+          }
+
+          var targetW = content.clientWidth ||
+                        document.documentElement.clientWidth ||
+                        canvas.width || 600;
+          var targetH = Math.max(380, Math.floor(window.innerHeight * 0.55));
+
+          // Setting width/height attributes on a canvas resets its
+          // pixel grid AND clears any drawing — fine on initial
+          // render before the user has signed.
+          canvas.width = targetW;
+          canvas.height = targetH;
+          canvas.style.width = '100%';
+          canvas.style.height = targetH + 'px';
+          content.style.height = targetH + 'px';
+
+          // Replace DA's SignaturePad instance so it reads the new
+          // canvas dimensions for hit-testing. DA's `.dasigsave` /
+          // `.dasigclear` handlers reference `daSignaturePad`
+          // globally — keeping that variable updated means Save and
+          // Clear keep working.
+          try {
+            window.daSignaturePad = new window.SignaturePad(canvas);
+            var thickness = window.daThicknessScalingFactor || 1;
+            window.daSignaturePad.minWidth = 0.5 * thickness;
+            window.daSignaturePad.maxWidth = 2.5 * thickness;
+            window.daSignaturePad.penColor = window.daColor || '#000';
+          } catch (e) {}
+          return true;
+        }
+
         function paint() {
           var info = decorateRail() || {};
           injectSectionTitle(info.activeBtn);
@@ -917,6 +970,19 @@ default screen parts:
           // skipped.
           if (document.getElementById('daform') || document.getElementById('dasigform')) {
             injectBottomBar(isFinal);
+          }
+
+          // Signature canvas: DA initializes it asynchronously; poll
+          // briefly until #dasigcanvas appears, then resize. Cap at
+          // ~2s of attempts (40 × 50ms) to avoid lingering timers.
+          if (document.getElementById('dasigform')) {
+            var attempts = 0;
+            var poll = setInterval(function () {
+              attempts++;
+              if (expandSignatureCanvas() || attempts > 40) {
+                clearInterval(poll);
+              }
+            }, 50);
           }
         }
 
