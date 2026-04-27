@@ -752,16 +752,22 @@ default screen parts:
           var existing = document.querySelector('.sd-bottom-bar');
           if (existing) existing.remove();
 
-          // Verify DA's question form is on the page; bail otherwise.
-          if (!document.getElementById('daform')) return;
+          // DA renders two distinct form variants we care about:
+          //   • `#daform`     — every regular question screen
+          //   • `#dasigform`  — signature screens (canvas + Save/Clear)
+          // Bail if neither is present (e.g. error / chat-only pages).
+          var hasMainForm = !!document.getElementById('daform');
+          var isSignature = !!document.getElementById('dasigform');
+          if (!hasMainForm && !isSignature) return;
 
           var bar = document.createElement('div');
           bar.className = 'sd-bottom-bar';
           if (isFinal) bar.classList.add('sd-bottom-bar--final');
+          if (isSignature) bar.classList.add('sd-bottom-bar--signature');
 
           // We append `bar` to <body> (NOT inside the form) so that
           // `position: fixed` reliably anchors to the viewport — a
-          // transform/filter on any ancestor of #daform would create
+          // transform/filter on any ancestor of the form would create
           // a fixed-positioning containing block and push the bar
           // off-screen.  HTML5's `form="<id>"` attribute on each
           // submit button associates it with the target form by ID
@@ -785,30 +791,61 @@ default screen parts:
               if (window.history && window.history.length > 1) window.history.back();
             });
           }
-
-          // NEXT — submits #daform with name="_continue", exactly
-          // matching DA's own continue button.
-          var next = document.createElement('button');
-          next.type = 'submit';
-          next.setAttribute('form', 'daform');
-          next.name = '_continue';
-          next.value = 'Continue';
-          next.className = 'sd-btn sd-btn--next';
-          next.innerHTML = 'Next <span class="sd-btn-glyph">▶</span>';
-
-          // FINISH — same submission as Next, just relabelled. CSS
-          // toggles which one is visible based on `--final` class.
-          var finish = document.createElement('button');
-          finish.type = 'submit';
-          finish.setAttribute('form', 'daform');
-          finish.name = '_continue';
-          finish.value = 'Continue';
-          finish.className = 'sd-btn sd-btn--finish';
-          finish.innerHTML = '<span class="sd-btn-glyph">✓</span> Finish';
-
           bar.appendChild(prev);
-          bar.appendChild(next);
-          bar.appendChild(finish);
+
+          if (isSignature) {
+            // Signature screen: DA renders Save/Clear as <a href="#">
+            // links with classes `.dasigsave` and `.dasigclear`. DA's
+            // bundle.js binds click handlers that read the canvas,
+            // populate `#da_the_image`, and submit `#dasigform`. We
+            // proxy clicks to those links so the user sees Next / Clear
+            // / Finish in our bar instead of DA's native row.
+            var clear = document.createElement('button');
+            clear.type = 'button';
+            clear.className = 'sd-btn sd-btn--clear';
+            clear.innerHTML = '<span class="sd-btn-glyph">✕</span> Clear';
+            clear.addEventListener('click', function () {
+              var sigClear = document.querySelector('.dasigclear');
+              if (sigClear) sigClear.click();
+            });
+
+            var sigNext = document.createElement('button');
+            sigNext.type = 'button';
+            sigNext.className = 'sd-btn ' + (isFinal ? 'sd-btn--finish' : 'sd-btn--next');
+            sigNext.innerHTML = isFinal
+              ? '<span class="sd-btn-glyph">✓</span> Finish'
+              : 'Next <span class="sd-btn-glyph">▶</span>';
+            sigNext.addEventListener('click', function () {
+              var sigSave = document.querySelector('.dasigsave');
+              if (sigSave) sigSave.click();
+            });
+
+            bar.appendChild(clear);
+            bar.appendChild(sigNext);
+          } else {
+            // Regular question screen: real submit buttons that post
+            // `#daform` with `_continue=Continue`, identical to DA's
+            // native continue button.
+            var next = document.createElement('button');
+            next.type = 'submit';
+            next.setAttribute('form', 'daform');
+            next.name = '_continue';
+            next.value = 'Continue';
+            next.className = 'sd-btn sd-btn--next';
+            next.innerHTML = 'Next <span class="sd-btn-glyph">▶</span>';
+
+            var finish = document.createElement('button');
+            finish.type = 'submit';
+            finish.setAttribute('form', 'daform');
+            finish.name = '_continue';
+            finish.value = 'Continue';
+            finish.className = 'sd-btn sd-btn--finish';
+            finish.innerHTML = '<span class="sd-btn-glyph">✓</span> Finish';
+
+            bar.appendChild(next);
+            bar.appendChild(finish);
+          }
+
           document.body.appendChild(bar);
         }
 
@@ -820,11 +857,11 @@ default screen parts:
           if (isFinal) document.body.classList.add('sd-screen-final');
           else document.body.classList.remove('sd-screen-final');
 
-          // Only inject the action bar on screens that have DA's
-          // own continue button — skips standalone signature /
-          // playground pages where DA wouldn't accept a `_continue=`
-          // submit anyway.
-          if (document.querySelector('#da-continue-button, button[name="_continue"]')) {
+          // Inject the bar on any screen that hosts a DA navigation
+          // form — main question (`#daform`) or signature
+          // (`#dasigform`). Other DA pages (errors, chat-only) get
+          // skipped.
+          if (document.getElementById('daform') || document.getElementById('dasigform')) {
             injectBottomBar(isFinal);
           }
         }
