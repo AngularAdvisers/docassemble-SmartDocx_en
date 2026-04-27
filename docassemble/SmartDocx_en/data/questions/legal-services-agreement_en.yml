@@ -2,8 +2,13 @@
 include:
   - init-data_en.yml
 ---
-features:
-  css: docassemble.SmartDocx_en:data/static/sd_en.css
+# Note: HotDocs theme CSS is injected inline via init-data_en.yml's
+# `default screen parts: post:` <style> block, NOT loaded from
+# data/static/sd_en.css. Inlining bypasses Docassemble's aggressive
+# `Cache-Control: max-age=31536000` on packagestatic files — every
+# package upgrade was getting the right CSS to disk but browsers were
+# serving the year-old cached version. Inline ships fresh CSS in every
+# interview HTML response.
 ---
 metadata:
   title: |

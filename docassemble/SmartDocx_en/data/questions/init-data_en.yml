@@ -8,6 +8,274 @@ code: |
 # question body so the function is defined before any button calls it.
 default screen parts:
   post: |
+    <style>
+      /* HotDocs theme — inlined in every interview response so it
+         can never be cached stale. (DA serves /packagestatic/* with
+         Cache-Control: public, max-age=31536000, which kept every
+         browser locked to the version of sd_en.css that landed on
+         their first visit, regardless of package upgrades.) */
+      :root {
+        --sd-primary: #00578B;
+        --sd-primary-hover: #03446e;
+        --sd-accent: #4F92C8;
+        --sd-active-bg: #E5EFF7;
+        --sd-rail-bg: #F4F6F8;
+        --sd-pane-bg: #FFFFFF;
+        --sd-page-bg: #FAFBFC;
+        --sd-border: #C4CDD8;
+        --sd-text: #1F2937;
+        --sd-muted: #64748B;
+        --sd-tick: #2A9D3D;
+        --sd-progress: #76D156;
+        --sd-input-bg: #FFFFFF;
+        --sd-input-text: #1F2937;
+        --sd-button-secondary-bg: #FFFFFF;
+      }
+      [data-bs-theme="dark"] {
+        --sd-primary: #6BA8DD;
+        --sd-primary-hover: #8FBCE5;
+        --sd-accent: #4F92C8;
+        --sd-active-bg: rgba(79, 146, 200, 0.22);
+        --sd-rail-bg: #1E293B;
+        --sd-pane-bg: #0F172A;
+        --sd-page-bg: #0B1220;
+        --sd-border: #475569;
+        --sd-text: #F1F5F9;
+        --sd-muted: #94A3B8;
+        --sd-tick: #4ADE80;
+        --sd-progress: #4ADE80;
+        --sd-input-bg: #1E293B;
+        --sd-input-text: #F1F5F9;
+        --sd-button-secondary-bg: #1E293B;
+      }
+      .navbar { display: none; }
+      body {
+        background: var(--sd-page-bg);
+        color: var(--sd-text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        padding-bottom: 72px !important;
+      }
+      .sd-outline-header {
+        display: flex; align-items: center; gap: 8px;
+        padding: 12px 16px;
+        background: var(--sd-rail-bg); color: var(--sd-text);
+        font-size: 13px; font-weight: 700; letter-spacing: 0.04em;
+        text-transform: uppercase; cursor: pointer; user-select: none;
+        border-bottom: 1px solid var(--sd-border);
+      }
+      .sd-outline-header:hover { color: var(--sd-primary); }
+      .sd-outline-chev {
+        font-size: 12px; color: var(--sd-muted);
+        width: 14px; display: inline-block;
+      }
+      .sd-outline-title { flex: 1; }
+      div.danavdiv {
+        margin-top: 0; padding: 0 0 12px 0;
+        background: var(--sd-rail-bg);
+        border-right: 2px solid var(--sd-border);
+        min-height: 100vh;
+      }
+      div.danavdiv.sd-rail-collapsed div.dasections,
+      div.danavdiv.sd-rail-collapsed > *:not(.sd-outline-header) {
+        display: none;
+      }
+      div.dasections { line-height: 1.4; padding-top: 8px; }
+      div.dasections .btn {
+        display: flex; align-items: center; gap: 10px;
+        width: 100%; text-align: left;
+        font-size: 14px; font-weight: 500; color: var(--sd-text);
+        padding: 9px 16px 9px 36px;
+        border-radius: 0; background: transparent;
+        border: none; border-left: 3px solid transparent;
+        position: relative; white-space: normal;
+      }
+      div.dasections .btn:hover {
+        text-decoration: none;
+        background: rgba(0, 87, 139, 0.06); color: var(--sd-primary);
+      }
+      [data-bs-theme="dark"] div.dasections .btn:hover {
+        background: rgba(107, 168, 221, 0.08);
+      }
+      div.dasections .btn[data-sd-group] {
+        font-weight: 600; cursor: pointer; padding-left: 30px;
+      }
+      div.dasections .btn[data-sd-group]::before {
+        content: ""; position: absolute; left: 12px; top: 50%;
+        width: 0; height: 0; margin-top: -4px;
+        border-style: solid; border-width: 4px 0 4px 6px;
+        border-color: transparent transparent transparent var(--sd-muted);
+        transition: transform 0.15s ease; transform-origin: 2px 50%;
+      }
+      div.dasections .btn[data-sd-group][data-sd-collapsed="0"]::before {
+        transform: rotate(90deg);
+      }
+      div.dasections .dainlineinside[data-sd-collapsed="1"] { display: none; }
+      div.dasections .btn[data-sd-status="complete"]::after,
+      div.dasections .btn[data-sd-status="active"]::after {
+        content: ""; position: absolute; left: 12px; top: 50%;
+        transform: translateY(-50%);
+        width: 16px; height: 16px; border-radius: 50%;
+        font-size: 11px; font-weight: 700;
+        display: inline-flex; align-items: center; justify-content: center;
+        line-height: 1;
+      }
+      div.dasections .btn[data-sd-status="complete"]::after {
+        content: "✓"; background: var(--sd-tick); color: #ffffff;
+      }
+      div.dasections .btn[data-sd-status="active"]::after {
+        content: ""; background: var(--sd-pane-bg);
+        border: 2px solid var(--sd-primary);
+        width: 14px; height: 14px;
+      }
+      div.dasections .btn.daactive,
+      div.dasections .daactive,
+      div.dasections .btn.btn-primary.daactive {
+        background: var(--sd-active-bg) !important;
+        color: var(--sd-primary) !important;
+        font-weight: 600;
+        border-left: 3px solid var(--sd-primary);
+      }
+      div.dasections div.dainlineinside .btn {
+        padding-left: 48px; font-size: 13px;
+        font-weight: 400; color: var(--sd-muted);
+      }
+      div.dasections div.dainlineinside .btn[data-sd-status="complete"]::after,
+      div.dasections div.dainlineinside .btn[data-sd-status="active"]::after {
+        left: 24px; width: 14px; height: 14px; font-size: 10px;
+      }
+      div.dasections div.dainlineinside .btn[data-sd-status="active"]::after {
+        width: 12px; height: 12px;
+      }
+      .sd-section-title-bar {
+        background: var(--sd-active-bg); color: var(--sd-primary);
+        padding: 14px 24px; margin: 0 0 16px 0;
+        font-size: 16px; font-weight: 600;
+        border-bottom: 1px solid var(--sd-border);
+      }
+      #dadiv, .daquestion {
+        background: var(--sd-pane-bg); color: var(--sd-text); padding: 0;
+      }
+      .daquestion .form-control,
+      .daquestion input[type="text"],
+      .daquestion input[type="email"],
+      .daquestion input[type="number"],
+      .daquestion input[type="date"],
+      .daquestion select,
+      .daquestion textarea {
+        background: var(--sd-input-bg); color: var(--sd-input-text);
+        border: 1px solid var(--sd-border); border-radius: 4px;
+        padding: 8px 12px; font-size: 14px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+      .daquestion .form-control:focus,
+      .daquestion input:focus,
+      .daquestion select:focus,
+      .daquestion textarea:focus {
+        border-color: var(--sd-primary);
+        box-shadow: 0 0 0 3px rgba(0, 87, 139, 0.18);
+        outline: none;
+      }
+      .daquestion label {
+        font-weight: 500; color: var(--sd-text);
+        margin-bottom: 6px; font-size: 13px;
+      }
+      .danavlinkbuttons,
+      button[name="_continue"],
+      button[name="_back_button"],
+      #daQuestionSubmit,
+      #daPageBack {
+        position: absolute !important;
+        width: 1px !important; height: 1px !important;
+        padding: 0 !important; margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        border: 0 !important; white-space: nowrap !important;
+      }
+      .sd-bottom-bar {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        display: flex; align-items: center; gap: 8px;
+        padding: 10px 24px;
+        background: var(--sd-pane-bg);
+        border-top: 1px solid var(--sd-border);
+        z-index: 1000;
+        box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.06);
+      }
+      .sd-bottom-bar .sd-btn--prev { margin-right: auto; }
+      [data-bs-theme="dark"] .sd-bottom-bar {
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.4);
+      }
+      .sd-btn {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 7px 18px; font-size: 13px; font-weight: 500;
+        border-radius: 4px; border: 1px solid var(--sd-border);
+        background: var(--sd-button-secondary-bg);
+        color: var(--sd-text); cursor: pointer;
+        transition: background 0.12s, border-color 0.12s;
+      }
+      .sd-btn:hover {
+        background: var(--sd-active-bg);
+        border-color: var(--sd-primary); color: var(--sd-primary);
+      }
+      .sd-btn--next, .sd-btn--finish {
+        background: var(--sd-primary); border-color: var(--sd-primary);
+        color: #ffffff;
+      }
+      .sd-btn--next:hover, .sd-btn--finish:hover {
+        background: var(--sd-primary-hover);
+        border-color: var(--sd-primary-hover); color: #ffffff;
+      }
+      .sd-btn-glyph { font-size: 11px; }
+      .sd-bottom-bar.sd-bottom-bar--final .sd-btn--next { display: none; }
+      div.daprogress .progress {
+        height: 4px; background: transparent; border-radius: 0;
+      }
+      div.daprogress .progress-bar { background: var(--sd-progress); }
+      @media (max-width: 991.98px) {
+        div.danavdiv {
+          min-height: auto; border-right: 0;
+          border-bottom: 2px solid var(--sd-border);
+          padding: 0 0 8px 0;
+        }
+        div.dasections .btn { padding: 8px 12px 8px 36px; font-size: 13px; }
+        .sd-section-title-bar { padding: 12px 16px; font-size: 15px; }
+        .sd-bottom-bar { padding: 8px 16px; }
+        .sd-btn { padding: 6px 14px; font-size: 12px; }
+        body { padding-bottom: 64px !important; }
+      }
+      @media (min-width: 992px) {
+        .sd-outline-header { padding: 10px 14px; font-size: 12px; }
+        div.danavdiv { padding-bottom: 10px; }
+        div.dasections .btn { padding: 7px 14px 7px 34px; font-size: 13px; }
+        div.dasections .btn[data-sd-group] { padding-left: 28px; }
+        div.dasections .btn[data-sd-status="complete"]::after,
+        div.dasections .btn[data-sd-status="active"]::after {
+          left: 11px; width: 14px; height: 14px; font-size: 10px;
+        }
+        div.dasections div.dainlineinside .btn {
+          padding-left: 42px; font-size: 12px;
+        }
+        div.dasections div.dainlineinside .btn[data-sd-status="complete"]::after,
+        div.dasections div.dainlineinside .btn[data-sd-status="active"]::after {
+          left: 22px; width: 12px; height: 12px; font-size: 9px;
+        }
+        .sd-section-title-bar { padding: 10px 20px; margin: 0 0 12px 0; font-size: 14px; }
+        .daquestion .form-control,
+        .daquestion input[type="text"],
+        .daquestion input[type="email"],
+        .daquestion input[type="number"],
+        .daquestion input[type="date"],
+        .daquestion select,
+        .daquestion textarea {
+          padding: 4px 8px; font-size: 13px;
+          height: calc(1.5em + 0.5rem + 2px);
+        }
+        .daquestion textarea { height: auto; }
+        .daquestion label { margin-bottom: 4px; font-size: 12px; }
+        .sd-bottom-bar { padding: 8px 24px; }
+        .sd-btn { padding: 5px 14px; font-size: 12px; }
+        div.daprogress .progress { height: 3px; }
+      }
+    </style>
     <script>
       function smartDocxSaveAndExit(btn) {
         if (btn) {
