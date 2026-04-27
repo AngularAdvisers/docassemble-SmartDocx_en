@@ -8,6 +8,12 @@ code: |
 # question body so the function is defined before any button calls it.
 default screen parts:
   post: |
+    <!-- Bootstrap Icons font — loaded from CDN so we can use the
+         official `bi-arrows-collapse` / `bi-arrows-expand` glyphs
+         on the outline header without inlining (and miscopying)
+         the SVG paths. -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
       /* HotDocs theme — inlined in every interview response so it
          can never be cached stale. (DA serves /packagestatic/* with
@@ -147,6 +153,7 @@ default screen parts:
         line-height: 0;
       }
       .sd-outline-header:hover .sd-outline-toggle { color: var(--sd-primary); }
+      .sd-outline-toggle .bi { font-size: 16px; line-height: 1; display: inline-block; }
       .sd-outline-toggle svg { width: 16px; height: 16px; display: block; }
 
       /* Rail-collapsed state is now PURELY a label — the visual
@@ -210,7 +217,7 @@ default screen parts:
          catch every variant. Ours are kept via a class-based
          exception list (.sd-outline-* classes). */
       div.danavdiv span:not(.sd-outline-toggle):not(.sd-outline-title):not(.sd-outline-icon),
-      div.danavdiv i:not(.sd-outline-icon),
+      div.danavdiv i:not(.sd-outline-icon):not(.bi),
       div.danavdiv svg:not(.sd-outline-toggle-icon),
       div.danavdiv img,
       a.danavlink > * {
@@ -680,27 +687,18 @@ default screen parts:
           //        collapses
           //      • arrows-expand   — rail collapsed, click expands
           if (!rail.parentElement.querySelector('.sd-outline-header')) {
-            // Bootstrap-icons 1.11.3 — arrows-collapse / arrows-expand.
-            // Paths copied verbatim from the upstream SVG files; do
-            // not edit by hand. Earlier paste broke the top-arrow
-            // closure (`l2-2z` segment) and rendered overlapping
-            // partial shapes.
-            var SD_ICON_COLLAPSE =
-              '<svg xmlns="http://www.w3.org/2000/svg" class="sd-outline-toggle-icon" ' +
-              'width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">' +
-              '<path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646 2.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 3.707V6.5a.5.5 0 0 1-1 0V3.707L6.354 4.854a.5.5 0 1 1-.708-.708l2-2zM8 10a.5.5 0 0 1 .5.5v2.793l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 13.293V10.5A.5.5 0 0 1 8 10z"/></svg>';
-            var SD_ICON_EXPAND =
-              '<svg xmlns="http://www.w3.org/2000/svg" class="sd-outline-toggle-icon" ' +
-              'width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">' +
-              '<path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8zM7.646.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 1.707V5.5a.5.5 0 0 1-1 0V1.707L6.354 2.854a.5.5 0 1 1-.708-.708l2-2zm-.5 11.354a.5.5 0 0 0 0 .708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 13.293V10.5a.5.5 0 0 0-1 0v2.793l-1.146-1.147a.5.5 0 0 0-.708 0z"/></svg>';
-
+            // Use Bootstrap-icons via the CSS-font loaded at the top
+            // of `default screen parts: post:`. The class on the <i>
+            // determines the glyph — `bi-arrows-collapse` on the
+            // expanded state, `bi-arrows-expand` on the collapsed
+            // state. No hand-typed SVG paths to get wrong.
             var hdr = document.createElement('div');
             hdr.className = 'sd-outline-header';
             hdr.innerHTML =
               '<i class="fa-solid fa-list-ul sd-outline-icon" aria-hidden="true"></i>' +
               '<span class="sd-outline-title">Outline</span>' +
               '<span class="sd-outline-toggle" role="button" aria-label="Collapse outline">' +
-              SD_ICON_COLLAPSE + '</span>';
+              '<i class="bi bi-arrows-collapse" aria-hidden="true"></i></span>';
             hdr.addEventListener('click', function () {
               var collapsed = rail.parentElement.classList.toggle('sd-rail-collapsed');
 
@@ -724,7 +722,9 @@ default screen parts:
               });
 
               var toggle = hdr.querySelector('.sd-outline-toggle');
-              toggle.innerHTML = collapsed ? SD_ICON_EXPAND : SD_ICON_COLLAPSE;
+              toggle.innerHTML = collapsed
+                ? '<i class="bi bi-arrows-expand" aria-hidden="true"></i>'
+                : '<i class="bi bi-arrows-collapse" aria-hidden="true"></i>';
               toggle.setAttribute('aria-label', collapsed ? 'Expand outline' : 'Collapse outline');
             });
             rail.parentElement.insertBefore(hdr, rail);
