@@ -178,12 +178,14 @@ default screen parts:
       }
       a.danavlink:hover { color: var(--sd-primary); }
 
-      /* DA injects its OWN `.toggler` span inside each group's
-         `<a class="danavlink">` — that's the BLUE triangle the user
-         saw alongside our gray collapse button. Hide it via CSS so
-         only our working gray button remains. (We also strip non-
-         text child nodes from group links in JS as belt-and-braces.) */
-      a.danavlink .toggler {
+      /* Hide ANY element children of `<a class="danavlink">`. DA's
+         bundle.js injects a `.toggler` arrow node AFTER page load —
+         after my JS has already stripped the link's children at
+         DOMContentLoaded — so my JS pass alone doesn't catch it.
+         A CSS rule that hides every element child wins regardless
+         of when DA's JS runs. Text content (the section name) is a
+         text node, not an element, so it stays visible. */
+      a.danavlink > * {
         display: none !important;
       }
 
