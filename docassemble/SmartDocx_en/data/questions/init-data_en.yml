@@ -267,10 +267,11 @@ default screen parts:
       @media (max-width: 991.98px) {
         div.danavdiv {
           min-height: auto; border-right: 0;
-          border-bottom: 2px solid var(--sd-border);
-          padding: 0 0 8px 0;
+          border-bottom: 1px solid var(--sd-border);
+          padding: 0;
         }
-        div.dasections .btn { padding: 8px 12px 8px 36px; font-size: 13px; }
+        a.danavlink { padding: 7px 12px 7px 30px; font-size: 13px; }
+        div.danavnested a.danavlink { padding-left: 38px; font-size: 12px; }
         .sd-section-title-bar { padding: 12px 16px; font-size: 15px; }
         .sd-bottom-bar { padding: 8px 16px; }
         .sd-btn { padding: 6px 14px; font-size: 12px; }
@@ -278,19 +279,22 @@ default screen parts:
       }
       @media (min-width: 992px) {
         .sd-outline-header { padding: 10px 14px; font-size: 12px; }
-        div.danavdiv { padding-bottom: 10px; }
-        div.dasections .btn { padding: 7px 14px 7px 34px; font-size: 13px; }
-        div.dasections .btn[data-sd-group] { padding-left: 28px; }
-        div.dasections .btn[data-sd-status="complete"]::after,
-        div.dasections .btn[data-sd-status="active"]::after {
-          left: 11px; width: 14px; height: 14px; font-size: 10px;
+        div.danavdiv { padding: 0; }
+        a.danavlink { padding: 5px 14px 5px 28px; font-size: 12px; }
+        a.danavlink:not(.daclickable) { padding-left: 22px; }
+        a.danavlink[data-sd-status="complete"]::after,
+        a.danavlink[data-sd-status="active"]::after {
+          left: 11px; width: 12px; height: 12px; font-size: 9px;
         }
-        div.dasections div.dainlineinside .btn {
-          padding-left: 42px; font-size: 12px;
+        a.danavlink[data-sd-status="active"]::after {
+          width: 10px; height: 10px;
         }
-        div.dasections div.dainlineinside .btn[data-sd-status="complete"]::after,
-        div.dasections div.dainlineinside .btn[data-sd-status="active"]::after {
-          left: 22px; width: 12px; height: 12px; font-size: 9px;
+        div.danavnested a.danavlink {
+          padding-left: 34px; font-size: 12px;
+        }
+        div.danavnested a.danavlink[data-sd-status="complete"]::after,
+        div.danavnested a.danavlink[data-sd-status="active"]::after {
+          left: 18px; width: 11px; height: 11px; font-size: 8px;
         }
         .sd-section-title-bar { padding: 10px 20px; margin: 0 0 12px 0; font-size: 14px; }
         .daquestion .form-control,
