@@ -149,13 +149,12 @@ default screen parts:
       .sd-outline-header:hover .sd-outline-toggle { color: var(--sd-primary); }
       .sd-outline-toggle svg { width: 16px; height: 16px; display: block; }
 
-      /* Rail collapsed — keep just the Outline header visible; hide
-         everything else inside the .danavdiv (the nav links and
-         their wrappers). The .sd-outline-toggle inside the header
-         itself is whitelisted by the explicit selector. */
-      div.danavdiv.sd-rail-collapsed > *:not(.sd-outline-header) {
-        display: none !important;
-      }
+      /* Rail-collapsed state is now PURELY a label — the visual
+         collapse happens via the existing per-group rule
+         `div.danavnested.sd-collapsed { display: none }`, which the
+         JS toggles on every group when the user hits the outline
+         header. Parent section labels stay visible; only their
+         children fold up. */
       /* SIDE RAIL — verified against DA's actual rendered structure:
            <div role="navigation" class="...danavdiv">
              <div class="nav flex-column nav-pills danav danav-vertical danavlinks">
@@ -705,6 +704,26 @@ default screen parts:
               SD_ICON_COLLAPSE + '</span>';
             hdr.addEventListener('click', function () {
               var collapsed = rail.parentElement.classList.toggle('sd-rail-collapsed');
+
+              // Bulk collapse/expand every group's subsection list.
+              // Parent section labels stay visible — only the
+              // <div class="danavnested"> children of each group
+              // toggle.
+              rail.querySelectorAll('.danavnested').forEach(function (nested) {
+                nested.classList.toggle('sd-collapsed', collapsed);
+              });
+              // Sync each per-group collapse-button glyph so the row
+              // triangles match the bulk action.
+              rail.querySelectorAll('.sd-group-collapse-btn').forEach(function (btn) {
+                btn.textContent = collapsed ? '▶' : '▼';
+              });
+              // Persist per-group state so a page navigation keeps
+              // the same expanded/collapsed shape the user just set.
+              rail.querySelectorAll('.sd-group-row > a.danavlink').forEach(function (groupLink) {
+                var key = INTERVIEW_KEY + ':collapsed:' + (groupLink.textContent || '').trim();
+                try { sessionStorage.setItem(key, collapsed ? '1' : '0'); } catch (e) {}
+              });
+
               var toggle = hdr.querySelector('.sd-outline-toggle');
               toggle.innerHTML = collapsed ? SD_ICON_EXPAND : SD_ICON_COLLAPSE;
               toggle.setAttribute('aria-label', collapsed ? 'Expand outline' : 'Collapse outline');
