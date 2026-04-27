@@ -228,13 +228,21 @@ default screen parts:
         display: none !important;
       }
 
-      /* SUBSECTION links: smaller font + muted color. Indent for
-         the green ✓ on the LEFT. */
+      /* SUBSECTION links: smaller font + muted color. Use the SAME
+         padding-left as the base rule (42px) so the green ✓ at
+         left: 24px doesn't overlap the section text. */
       div.danavnested a.danavlink {
         font-size: 12px;
         font-weight: 400;
         color: var(--sd-muted);
-        padding-left: 32px !important;
+      }
+      /* Defensive: kill any ::before pseudo on nav links. Some DA
+         rendering paths inject decorative arrows here; combined with
+         our injected `.sd-group-collapse-btn` the user was seeing
+         two twisties. Keeping ::after free for the status check. */
+      a.danavlink::before {
+        content: none !important;
+        display: none !important;
       }
 
       /* Active section highlight — pale blue + navy + left bar. */
@@ -588,6 +596,15 @@ default screen parts:
           rail.querySelectorAll('a.danavlink:not(.daclickable)').forEach(function (groupLink) {
             // Skip if we've already wrapped this group.
             if (groupLink.parentElement && groupLink.parentElement.classList.contains('sd-group-row')) return;
+
+            // Defensive: if DA's JS injected any non-text child nodes
+            // (icons, spans, .toggler arrows, etc.) into the group
+            // link, strip them — they were producing extra "twisties"
+            // alongside our collapse button.
+            for (var i = groupLink.childNodes.length - 1; i >= 0; i--) {
+              var n = groupLink.childNodes[i];
+              if (n.nodeType !== 3) groupLink.removeChild(n);  // 3 = text node
+            }
             // Find the matching .danavnested sibling (the children
             // container that follows this group label).
             var nested = null;
