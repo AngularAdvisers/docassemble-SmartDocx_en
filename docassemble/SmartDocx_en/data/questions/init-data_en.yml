@@ -197,21 +197,31 @@ default screen parts:
 
         // 4. SECTION TITLE BAR. Synthesised at the top of the question
         //    pane — always reflects the current screen because we read
-        //    .daactive AT this render. Inserted before #daquestion's
-        //    first child so it's visually pinned to the top.
+        //    .daactive AT this render. Selector falls through several
+        //    plausible DA containers; if none match, we anchor the bar
+        //    at the top of <main> or <body> so it's always visible.
         function injectSectionTitle(activeBtn) {
-          var pane = document.querySelector('#daquestion, .daquestion');
-          if (!pane) return;
-          // Remove any existing one (in case DA re-renders without a full reload).
-          var existing = pane.parentElement.querySelector('.sd-section-title-bar');
-          if (existing) existing.remove();
+          // Drop any prior bar — DA does full-page reloads but defensive
+          // anyway in case a screen renders twice.
+          document.querySelectorAll('.sd-section-title-bar').forEach(function (n) { n.remove(); });
           if (!activeBtn) return;
           var label = (activeBtn.textContent || '').trim();
           if (!label) return;
+
           var bar = document.createElement('div');
           bar.className = 'sd-section-title-bar';
           bar.textContent = label;
-          pane.parentElement.insertBefore(bar, pane);
+
+          var pane = document.querySelector(
+            '#daMainQuestion, #daquestion, #dadiv, [role="main"], main, .dafullscreen'
+          );
+          if (pane && pane.parentElement) {
+            pane.parentElement.insertBefore(bar, pane);
+          } else {
+            // Last-resort anchor: the bar at the top of body so it's
+            // never silently missing if DA's HTML structure shifts.
+            document.body.insertBefore(bar, document.body.firstChild);
+          }
         }
 
         // 5. BOTTOM ACTION BAR — Previous / Next / Finish.

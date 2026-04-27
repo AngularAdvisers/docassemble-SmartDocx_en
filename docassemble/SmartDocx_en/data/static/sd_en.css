@@ -313,7 +313,9 @@ button[name="_back_button"],
   right: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  /* Previous on the left, Next + Finish flush to the right.
+     `margin-left: auto` on Next pushes Previous to the left edge while
+     keeping Next+Finish grouped on the right — same layout as HotDocs. */
   gap: 8px;
   padding: 10px 24px;
   background: var(--sd-pane-bg);
@@ -321,6 +323,7 @@ button[name="_back_button"],
   z-index: 1000;
   box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.06);
 }
+.sd-bottom-bar .sd-btn--prev { margin-right: auto; }
 [data-bs-theme="dark"] .sd-bottom-bar {
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.4);
 }
@@ -362,8 +365,10 @@ button[name="_back_button"],
 
 .sd-btn-glyph { font-size: 11px; }
 
-/* Hide Finish on intermediate screens; hide Next on the final screen. */
-.sd-bottom-bar:not(.sd-bottom-bar--final) .sd-btn--finish { display: none; }
+/* Finish is ALWAYS visible (HotDocs always shows it bottom-right).
+   On the last screen we hide Next since Finish is the only forward
+   action — but Finish stays put on every screen so the user can
+   commit at any time. */
 .sd-bottom-bar.sd-bottom-bar--final .sd-btn--next { display: none; }
 
 /* ─── Progress bar ──────────────────────────────────────────────── */
