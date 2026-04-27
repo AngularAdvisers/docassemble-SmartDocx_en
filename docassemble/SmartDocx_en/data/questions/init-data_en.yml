@@ -871,23 +871,58 @@ default screen parts:
           // even when the button lives outside the form's DOM
           // hierarchy. Native click → native form submit, no proxy.
 
-          // PREVIOUS — submits DA's separate navbar back form
-          // (`#dabackbutton`), which already has the `_back_one=1`
-          // hidden input DA's POST handler expects for navigation.
-          // Falls back to history.back() if no back form is present
-          // (e.g. on the first question).
+          // PREVIOUS — walk the rail's leaves in DOM order and jump
+          // to the leaf immediately before the currently active one.
+          // DA's `_back_one` (`#dabackbutton`) pops its internal
+          // question stack, which gets unpredictable after section
+          // clicks (every `force_ask` pushes another stack frame),
+          // so the user reported Previous "bouncing around." Walking
+          // the rail in linear order gives the same result as the
+          // user's mental model: the visible section above the
+          // active one.
+          //
+          // Falls back to DA's back form if there's no previous leaf
+          // (e.g. on the first section), then to history.back().
           var prev = document.createElement('button');
+          prev.type = 'button';
           prev.className = 'sd-btn sd-btn--prev';
           prev.innerHTML = '<span class="sd-btn-glyph">◀</span> Previous';
-          if (document.getElementById('dabackbutton')) {
-            prev.type = 'submit';
-            prev.setAttribute('form', 'dabackbutton');
-          } else {
-            prev.type = 'button';
-            prev.addEventListener('click', function () {
-              if (window.history && window.history.length > 1) window.history.back();
-            });
-          }
+          prev.addEventListener('click', function () {
+            // Mirror the rail-querying logic from decorateRail() so
+            // we end up with the same vertical nav even if DA changes
+            // its wrapper classes between releases.
+            var railEl =
+              document.querySelector('div.danavdiv nav.danavlinks.danav-vertical') ||
+              document.querySelector('div.danavdiv .danav-vertical.danavlinks') ||
+              document.querySelector('div.danavdiv .nav.danav-vertical') ||
+              document.querySelector('div.danavdiv');
+            if (railEl) {
+              var leaves = railEl.querySelectorAll('a.danavlink.daclickable');
+              var activeIdx = -1;
+              for (var i = 0; i < leaves.length; i++) {
+                if (leaves[i].classList.contains('active')) {
+                  activeIdx = i;
+                  break;
+                }
+              }
+              if (activeIdx > 0) {
+                // DA binds `.danavlinks a.daclickable` clicks to
+                // `da_action_perform("_da_priority_action", …)`, so a
+                // native click() on the previous leaf triggers a real
+                // section jump.
+                leaves[activeIdx - 1].click();
+                return;
+              }
+            }
+            // No previous leaf — fall back to DA's back-one form,
+            // then browser history.
+            var dabackForm = document.getElementById('dabackbutton');
+            if (dabackForm && typeof dabackForm.submit === 'function') {
+              dabackForm.submit();
+              return;
+            }
+            if (window.history && window.history.length > 1) window.history.back();
+          });
           center.appendChild(prev);
 
           if (isSignature) {
