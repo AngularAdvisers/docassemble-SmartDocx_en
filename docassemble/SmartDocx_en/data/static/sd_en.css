@@ -1,16 +1,18 @@
 /* ───────────────────────────────────────────────────────────────────
  * Smart-Docx (en) — HotDocs-style interview theme.
  *
- * Combines CSS layered on top of Docassemble's Bootstrap 5 chrome with
- * the JS orchestrator in init-data_en.yml that adds:
- *   • [data-sd-status]    — "active" / "complete" tags on rail buttons
- *   • [data-sd-group]     — top-level group rows (with chevrons)
- *   • [data-sd-collapsed] — open/closed state on groups + their children
- *   • body.sd-screen-final — set on the last screen so we relabel
- *                            Continue → Finish via CSS content
+ * Pairs with init-data_en.yml's chrome orchestrator. The JS adds:
+ *   .sd-outline-header        — "▾ Outline" header at top of rail
+ *   .sd-rail-collapsed        — set on rail wrapper when collapsed
+ *   [data-sd-group]           — top-level group rows (chevron toggles)
+ *   [data-sd-collapsed]       — open/closed on groups + their children
+ *   [data-sd-status]          — "active" / "complete" tags on leaf rows
+ *   .sd-section-title-bar     — synthesised section title above question
+ *   .sd-bottom-bar            — Previous / Next / Finish footer
+ *   .sd-bottom-bar--final     — final-screen variant (Finish replaces Next)
+ *   body.sd-screen-final      — set on the last `done` screen
  * ─────────────────────────────────────────────────────────────────── */
 
-/* Light palette (default) */
 :root {
   --sd-primary: #00578B;
   --sd-primary-hover: #03446e;
@@ -19,7 +21,7 @@
   --sd-rail-bg: #F4F6F8;
   --sd-pane-bg: #FFFFFF;
   --sd-page-bg: #FAFBFC;
-  --sd-border: #DCE1E7;
+  --sd-border: #C4CDD8;          /* visible separator */
   --sd-text: #1F2937;
   --sd-muted: #64748B;
   --sd-tick: #2A9D3D;
@@ -37,7 +39,7 @@
   --sd-rail-bg: #1E293B;
   --sd-pane-bg: #0F172A;
   --sd-page-bg: #0B1220;
-  --sd-border: #334155;
+  --sd-border: #475569;          /* brighter so the rail/pane line is visible on dark */
   --sd-text: #F1F5F9;
   --sd-muted: #94A3B8;
   --sd-tick: #4ADE80;
@@ -54,21 +56,57 @@ body {
   color: var(--sd-text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
                "Helvetica Neue", Arial, sans-serif;
+  /* Reserve space at the bottom for our sticky action bar. */
+  padding-bottom: 72px !important;
 }
+
+/* ─── Outline header (top of rail) ────────────────────────────────── */
+
+.sd-outline-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--sd-rail-bg);
+  color: var(--sd-text);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--sd-border);
+}
+
+.sd-outline-header:hover { color: var(--sd-primary); }
+
+.sd-outline-chev {
+  font-size: 12px;
+  color: var(--sd-muted);
+  width: 14px;
+  display: inline-block;
+}
+
+.sd-outline-title { flex: 1; }
 
 /* ─── Section navigation rail (left) ─────────────────────────────── */
 
 div.danavdiv {
   margin-top: 0;
-  padding: 12px 0;
+  padding: 0 0 12px 0;
   background: var(--sd-rail-bg);
-  border-right: 1px solid var(--sd-border);
+  border-right: 2px solid var(--sd-border);  /* visible separator */
   min-height: 100vh;
 }
 
-div.dasections {
-  line-height: 1.4;
+/* When the user clicks the Outline header, collapse to a thin rail
+   showing only the header. The header chevron flips ▾ → ▸ via JS. */
+div.danavdiv.sd-rail-collapsed div.dasections,
+div.danavdiv.sd-rail-collapsed > *:not(.sd-outline-header) {
+  display: none;
 }
+
+div.dasections { line-height: 1.4; padding-top: 8px; }
 
 div.dasections .btn {
   display: flex;
@@ -93,19 +131,18 @@ div.dasections .btn:hover {
   background: rgba(0, 87, 139, 0.06);
   color: var(--sd-primary);
 }
-
 [data-bs-theme="dark"] div.dasections .btn:hover {
   background: rgba(107, 168, 221, 0.08);
 }
 
-/* ── Top-level GROUP rows (chevron, no green check, click toggles) ─ */
+/* ── Group rows (chevron, no green check, click toggles) ──────────── */
+
 div.dasections .btn[data-sd-group] {
   font-weight: 600;
   cursor: pointer;
   padding-left: 30px;
 }
 
-/* Chevron — points right when collapsed, down when expanded */
 div.dasections .btn[data-sd-group]::before {
   content: "";
   position: absolute;
@@ -125,12 +162,12 @@ div.dasections .btn[data-sd-group][data-sd-collapsed="0"]::before {
   transform: rotate(90deg);
 }
 
-/* Hide a group's children when collapsed */
 div.dasections .dainlineinside[data-sd-collapsed="1"] {
   display: none;
 }
 
-/* ── Completion-only green check on LEAF (sub-section) rows ─────── */
+/* ── Completion-only check on LEAF (sub-section) rows ─────────────── */
+
 div.dasections .btn[data-sd-status="complete"]::after,
 div.dasections .btn[data-sd-status="active"]::after {
   content: "";
@@ -155,18 +192,12 @@ div.dasections .btn[data-sd-status="complete"]::after {
   color: #ffffff;
 }
 
-/* Active leaf: hollow circle so it visually differs from complete */
 div.dasections .btn[data-sd-status="active"]::after {
   content: "";
   background: var(--sd-pane-bg);
   border: 2px solid var(--sd-primary);
   width: 14px;
   height: 14px;
-}
-
-/* Don't draw the leaf check on group rows (they have a chevron). */
-div.dasections .btn[data-sd-group][data-sd-status]::after {
-  display: none;
 }
 
 /* Active section — pale-blue fill + left accent bar */
@@ -179,7 +210,7 @@ div.dasections .btn.btn-primary.daactive {
   border-left: 3px solid var(--sd-primary);
 }
 
-/* Sub-items: extra indent so hierarchy reads */
+/* Sub-items — extra indent, smaller checks */
 div.dasections div.dainlineinside .btn {
   padding-left: 48px;
   font-size: 13px;
@@ -198,13 +229,13 @@ div.dasections div.dainlineinside .btn[data-sd-status="active"]::after {
   height: 12px;
 }
 
-/* ─── Section title bar (above the question) ────────────────────── */
+/* ─── Section title bar (synthesised at top of question pane) ────── */
 
 .sd-section-title-bar {
   background: var(--sd-active-bg);
   color: var(--sd-primary);
-  padding: 12px 24px;
-  margin: 0 -15px 16px -15px;  /* extend to pane edges */
+  padding: 14px 24px;
+  margin: 0 0 16px 0;
   font-size: 16px;
   font-weight: 600;
   border-bottom: 1px solid var(--sd-border);
@@ -251,57 +282,89 @@ div.dasections div.dainlineinside .btn[data-sd-status="active"]::after {
   font-size: 13px;
 }
 
-/* ─── Bottom action bar (Previous / Next / Finish) ──────────────── */
+/* ─── Hide DA's native button bar — our injected bar replaces it ──
+ * Scoped so signature pads / file pickers etc. (which use other
+ * buttons) still render correctly; we only hide the form submission
+ * pair our bar drives via .click(). */
 
 .danavlinkbuttons,
-.daquestion .btn-da-primary,
-.daquestion .btn-primary {
-  background: var(--sd-primary);
-  border-color: var(--sd-primary);
-  color: #ffffff;
+button[name="_continue"],
+button[name="_back_button"],
+#daQuestionSubmit,
+#daPageBack {
+  /* Keep them in the DOM (our bar clicks them) but visually hidden. */
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* ─── Bottom action bar (Previous / Next / Finish) ──────────────── */
+
+.sd-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 24px;
+  background: var(--sd-pane-bg);
+  border-top: 1px solid var(--sd-border);
+  z-index: 1000;
+  box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.06);
+}
+[data-bs-theme="dark"] .sd-bottom-bar {
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.sd-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 18px;
+  font-size: 13px;
   font-weight: 500;
-  padding: 8px 20px;
   border-radius: 4px;
-}
-
-.daquestion .btn-primary:hover,
-.daquestion .btn-da-primary:hover {
-  background: var(--sd-primary-hover);
-  border-color: var(--sd-primary-hover);
-}
-
-.daquestion .btn-secondary,
-.daquestion .btn-da-secondary {
-  background: var(--sd-button-secondary-bg);
   border: 1px solid var(--sd-border);
+  background: var(--sd-button-secondary-bg);
   color: var(--sd-text);
-  font-weight: 500;
-  padding: 8px 20px;
-  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
 }
 
-.daquestion .btn-secondary:hover {
+.sd-btn:hover {
   background: var(--sd-active-bg);
-  border-color: var(--sd-accent);
+  border-color: var(--sd-primary);
   color: var(--sd-primary);
 }
 
-/* On the final mandatory screen (`done` section), the JS sets
-   body.sd-screen-final. Hide DA's default Continue text and overlay
-   "Finish" via the button's pseudo-element so the visual reads HotDocs-
-   style without changing DA's underlying button name. */
-body.sd-screen-final .danavlinkbuttons,
-body.sd-screen-final button[name="_continue"],
-body.sd-screen-final #daQuestionSubmit {
-  font-size: 0;  /* hide the original "Continue" label */
+.sd-btn--next,
+.sd-btn--finish {
+  background: var(--sd-primary);
+  border-color: var(--sd-primary);
+  color: #ffffff;
 }
-body.sd-screen-final .danavlinkbuttons::after,
-body.sd-screen-final button[name="_continue"]::after,
-body.sd-screen-final #daQuestionSubmit::after {
-  content: "Finish";
-  font-size: 14px;
-  font-weight: 500;
+
+.sd-btn--next:hover,
+.sd-btn--finish:hover {
+  background: var(--sd-primary-hover);
+  border-color: var(--sd-primary-hover);
+  color: #ffffff;
 }
+
+.sd-btn-glyph { font-size: 11px; }
+
+/* Hide Finish on intermediate screens; hide Next on the final screen. */
+.sd-bottom-bar:not(.sd-bottom-bar--final) .sd-btn--finish { display: none; }
+.sd-bottom-bar.sd-bottom-bar--final .sd-btn--next { display: none; }
 
 /* ─── Progress bar ──────────────────────────────────────────────── */
 
@@ -318,28 +381,27 @@ div.daprogress .progress-bar { background: var(--sd-progress); }
   div.danavdiv {
     min-height: auto;
     border-right: 0;
-    border-bottom: 1px solid var(--sd-border);
-    padding: 8px 0;
+    border-bottom: 2px solid var(--sd-border);
+    padding: 0 0 8px 0;
   }
   div.dasections .btn {
     padding: 8px 12px 8px 36px;
     font-size: 13px;
   }
   .sd-section-title-bar {
-    padding: 10px 16px;
+    padding: 12px 16px;
     font-size: 15px;
   }
+  .sd-bottom-bar { padding: 8px 16px; }
+  .sd-btn { padding: 6px 14px; font-size: 12px; }
+  body { padding-bottom: 64px !important; }
 }
 
-/* ─── Desktop: HotDocs-compact density (≥ lg) ─────────────────────
- * HotDocs is noticeably denser than Bootstrap defaults. Hold mobile-
- * comfortable density on phones; shrink on the lg breakpoint where
- * the user is on a real keyboard/mouse.
- * ───────────────────────────────────────────────────────────────── */
+/* ─── Desktop: HotDocs-compact density ──────────────────────────── */
 
 @media (min-width: 992px) {
-  div.danavdiv { padding: 10px 0; }
-  div.dasections { line-height: 1.35; }
+  .sd-outline-header { padding: 10px 14px; font-size: 12px; }
+  div.danavdiv { padding-bottom: 10px; }
   div.dasections .btn {
     padding: 7px 14px 7px 34px;
     font-size: 13px;
@@ -365,8 +427,8 @@ div.daprogress .progress-bar { background: var(--sd-progress); }
   }
 
   .sd-section-title-bar {
-    padding: 9px 20px;
-    margin: 0 -15px 12px -15px;
+    padding: 10px 20px;
+    margin: 0 0 12px 0;
     font-size: 14px;
   }
 
@@ -384,20 +446,8 @@ div.daprogress .progress-bar { background: var(--sd-progress); }
   .daquestion textarea { height: auto; }
   .daquestion label { margin-bottom: 4px; font-size: 12px; }
 
-  .danavlinkbuttons,
-  .daquestion .btn-da-primary,
-  .daquestion .btn-primary,
-  .daquestion .btn-secondary,
-  .daquestion .btn-da-secondary {
-    padding: 5px 14px;
-    font-size: 13px;
-    line-height: 1.5;
-  }
-  body.sd-screen-final .danavlinkbuttons::after,
-  body.sd-screen-final button[name="_continue"]::after,
-  body.sd-screen-final #daQuestionSubmit::after {
-    font-size: 13px;
-  }
+  .sd-bottom-bar { padding: 8px 24px; }
+  .sd-btn { padding: 5px 14px; font-size: 12px; }
 
   div.daprogress .progress { height: 3px; }
 }
