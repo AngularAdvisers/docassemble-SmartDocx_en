@@ -266,3 +266,88 @@ div.daprogress .progress-bar {
     font-size: 13px;
   }
 }
+
+/* ─── Desktop: HotDocs-compact density (≥ lg) ─────────────────────
+ * HotDocs is noticeably denser than Bootstrap's defaults — labels
+ * ~12px, inputs ~13px with ~5px padding, buttons ~13px. We hold the
+ * comfortable Material-style density on phones (mobile-first
+ * constraint) and shrink everything one notch up at the lg breakpoint
+ * where the user is on a real keyboard/mouse and screen real estate
+ * is at a premium. Mirrors Bootstrap's `.btn-sm` / `.form-control-sm`
+ * scale.
+ * ───────────────────────────────────────────────────────────────── */
+
+@media (min-width: 992px) {
+  /* Section nav rail — tighter rows, smaller font */
+  div.danavdiv {
+    padding: 10px 0;
+  }
+  div.dasections {
+    line-height: 1.35;
+  }
+  div.dasections .btn {
+    padding: 7px 14px 7px 26px;
+    font-size: 13px;
+  }
+  div.dasections a.btn.daclickable::before {
+    left: 7px;
+    width: 14px;
+    height: 14px;
+    font-size: 10px;
+  }
+  div.dasections div.dainlineinside .btn {
+    padding-left: 42px;
+    font-size: 12px;
+  }
+  div.dasections div.dainlineinside a.btn.daclickable::before {
+    left: 24px;
+    width: 12px;
+    height: 12px;
+    font-size: 9px;
+  }
+
+  /* Question pane — denser title bar + form */
+  .dasectionheading,
+  h1.daquestionheading {
+    padding: 10px 20px;
+    margin: 0 0 10px 0;
+    font-size: 15px;
+  }
+
+  .daquestion .form-control,
+  .daquestion input[type="text"],
+  .daquestion input[type="email"],
+  .daquestion input[type="number"],
+  .daquestion input[type="date"],
+  .daquestion select,
+  .daquestion textarea {
+    padding: 4px 8px;
+    font-size: 13px;
+    height: calc(1.5em + 0.5rem + 2px); /* matches Bootstrap's form-control-sm */
+  }
+
+  .daquestion textarea {
+    height: auto;
+  }
+
+  .daquestion label {
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+
+  /* Action buttons — Bootstrap btn-sm scale */
+  .danavlinkbuttons,
+  .daquestion .btn-da-primary,
+  .daquestion .btn-primary,
+  .daquestion .btn-secondary,
+  .daquestion .btn-da-secondary {
+    padding: 5px 14px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* Progress bar — slightly thinner */
+  div.daprogress .progress {
+    height: 3px;
+  }
+}
