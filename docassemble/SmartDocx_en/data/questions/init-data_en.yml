@@ -915,6 +915,14 @@ default screen parts:
           for (var i = 0; i < leaves.length; i++) {
             if (leaves[i].classList.contains('active')) { activeIdx = i; break; }
           }
+          // If no .daclickable leaf is active, the active link may be
+          // a non-clickable label like "Completed" (no event handler,
+          // so it's NOT in `leaves`). Treat that case as "active sits
+          // AFTER the last leaf" so Previous goes to the last leaf
+          // instead of incorrectly disabling.
+          if (activeIdx === -1 && railEl && railEl.querySelector('a.danavlink.active') && leaves.length > 0) {
+            activeIdx = leaves.length;
+          }
 
           if (activeIdx > 0) {
             // DA binds `.danavlinks a.daclickable` clicks to
