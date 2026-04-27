@@ -376,31 +376,72 @@ default screen parts:
       /* Hide DA's native Back / Continue button row entirely — the
          HotDocs-style bottom bar (Previous / Next / Finish) is the
          only navigation surface the user should see. Submission still
-         works because our bar drives the buttons via
-         `jQuery(button).trigger('click')`, which fires DA's bound
-         click handlers regardless of visibility. (Earlier attempts
-         using `clip-rect` or off-screen positioning + a native
-         dispatchEvent broke submission; `display: none` + jQuery
-         trigger does not.) */
+         works because our bar's buttons are real <button type="submit">
+         elements with the HTML5 `form="<id>"` attribute targeting
+         #daform / #dabackbutton / #dasigform — native submission, no
+         proxy. Signature screens use Save/Clear (.dasigsave/.dasigclear);
+         our bar proxies clicks to those <a> links. */
       #daquestion .da-button-set,
       #da-continue-button,
-      #dabackToQuestion {
+      #dabackToQuestion,
+      /* Signature: hide DA's mobile top-bar (header) and desktop
+         button fieldset — our bottom bar replaces both. The CANVAS
+         host (`#dasigcontent`) and surrounding regions stay visible. */
+      #dasigheader,
+      .dasigbuttons {
+        display: none !important;
+      }
+      /* Signature: defensively size the canvas host so DA's signature
+         library has measurable dimensions to draw into. Without an
+         explicit min-height the canvas can render 0px tall on some
+         viewports and the user sees an "empty" signature page. */
+      #dasigpage,
+      #dasigtoppart,
+      #dasigmidpart,
+      #dasigbottompart,
+      #dasigcontent {
+        display: block !important;
+        width: 100%;
+      }
+      #dasigcontent {
+        min-height: 260px;
+        background: var(--sd-input-bg);
+        border: 1px dashed var(--sd-border);
+        border-radius: 4px;
+        position: relative;
+      }
+      /* DA pads the body with a tall stack of <br>s on mobile to
+         leave room for its sticky signature header. We're hiding
+         that header, so kill the spacer too. */
+      #dasigpage + .d-block.d-sm-none.da-d-sm-none,
+      #dasigpage ~ .d-block.d-sm-none.da-d-sm-none {
         display: none !important;
       }
       .sd-bottom-bar {
         position: fixed; bottom: 0; left: 0; right: 0;
-        /* Centered grouping: Previous + Next sit together in the
-           middle of the bar (Finish replaces Next on the final
-           review screen). justify-content: center keeps them
-           grouped regardless of viewport width. */
-        display: flex; align-items: center; justify-content: center;
-        gap: 12px;
+        /* Three-zone layout:
+              [    empty-left    ][ Prev + Next (center) ][ Finish (right) ]
+           Each zone is a flex item with `flex: 1`, so the center
+           group is genuinely centered relative to the viewport while
+           Finish hugs the right edge. */
+        display: flex; align-items: center;
         padding: 10px 24px;
         background: var(--sd-pane-bg);
         border-top: 1px solid var(--sd-border);
         z-index: 1000;
         box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.06);
       }
+      .sd-bottom-bar__left,
+      .sd-bottom-bar__center,
+      .sd-bottom-bar__right {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .sd-bottom-bar__left   { justify-content: flex-start; }
+      .sd-bottom-bar__center { justify-content: center; }
+      .sd-bottom-bar__right  { justify-content: flex-end; }
       [data-bs-theme="dark"] .sd-bottom-bar {
         box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.4);
       }
@@ -765,6 +806,17 @@ default screen parts:
           if (isFinal) bar.classList.add('sd-bottom-bar--final');
           if (isSignature) bar.classList.add('sd-bottom-bar--signature');
 
+          // Three layout zones — left empty, Previous + Next centered,
+          // Finish on the right. Each zone gets `flex: 1` so the
+          // center stays geometrically centered regardless of how
+          // many items live on the right.
+          var left   = document.createElement('div'); left.className   = 'sd-bottom-bar__left';
+          var center = document.createElement('div'); center.className = 'sd-bottom-bar__center';
+          var right  = document.createElement('div'); right.className  = 'sd-bottom-bar__right';
+          bar.appendChild(left);
+          bar.appendChild(center);
+          bar.appendChild(right);
+
           // We append `bar` to <body> (NOT inside the form) so that
           // `position: fixed` reliably anchors to the viewport — a
           // transform/filter on any ancestor of the form would create
@@ -791,15 +843,31 @@ default screen parts:
               if (window.history && window.history.length > 1) window.history.back();
             });
           }
-          bar.appendChild(prev);
+          center.appendChild(prev);
 
           if (isSignature) {
             // Signature screen: DA renders Save/Clear as <a href="#">
             // links with classes `.dasigsave` and `.dasigclear`. DA's
             // bundle.js binds click handlers that read the canvas,
             // populate `#da_the_image`, and submit `#dasigform`. We
-            // proxy clicks to those links so the user sees Next / Clear
-            // / Finish in our bar instead of DA's native row.
+            // proxy clicks to those links — the bar then mirrors a
+            // regular screen's structure: Next sits in the center
+            // alongside Previous, Finish on the right (where Clear
+            // lives because there's no Finish concept on a signature
+            // — Clear is the secondary action that fits the right
+            // slot). Both Next and Clear are <button type="button">
+            // because they don't directly submit; they delegate to
+            // DA's <a> handlers.
+            var sigNext = document.createElement('button');
+            sigNext.type = 'button';
+            sigNext.className = 'sd-btn sd-btn--next';
+            sigNext.innerHTML = 'Next <span class="sd-btn-glyph">▶</span>';
+            sigNext.addEventListener('click', function () {
+              var sigSave = document.querySelector('.dasigsave');
+              if (sigSave) sigSave.click();
+            });
+            center.appendChild(sigNext);
+
             var clear = document.createElement('button');
             clear.type = 'button';
             clear.className = 'sd-btn sd-btn--clear';
@@ -808,20 +876,7 @@ default screen parts:
               var sigClear = document.querySelector('.dasigclear');
               if (sigClear) sigClear.click();
             });
-
-            var sigNext = document.createElement('button');
-            sigNext.type = 'button';
-            sigNext.className = 'sd-btn ' + (isFinal ? 'sd-btn--finish' : 'sd-btn--next');
-            sigNext.innerHTML = isFinal
-              ? '<span class="sd-btn-glyph">✓</span> Finish'
-              : 'Next <span class="sd-btn-glyph">▶</span>';
-            sigNext.addEventListener('click', function () {
-              var sigSave = document.querySelector('.dasigsave');
-              if (sigSave) sigSave.click();
-            });
-
-            bar.appendChild(clear);
-            bar.appendChild(sigNext);
+            right.appendChild(clear);
           } else {
             // Regular question screen: real submit buttons that post
             // `#daform` with `_continue=Continue`, identical to DA's
@@ -833,6 +888,7 @@ default screen parts:
             next.value = 'Continue';
             next.className = 'sd-btn sd-btn--next';
             next.innerHTML = 'Next <span class="sd-btn-glyph">▶</span>';
+            center.appendChild(next);
 
             var finish = document.createElement('button');
             finish.type = 'submit';
@@ -841,9 +897,7 @@ default screen parts:
             finish.value = 'Continue';
             finish.className = 'sd-btn sd-btn--finish';
             finish.innerHTML = '<span class="sd-btn-glyph">✓</span> Finish';
-
-            bar.appendChild(next);
-            bar.appendChild(finish);
+            right.appendChild(finish);
           }
 
           document.body.appendChild(bar);
