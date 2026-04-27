@@ -1,37 +1,13 @@
 /* ───────────────────────────────────────────────────────────────────
  * Smart-Docx (en) — HotDocs-style interview theme.
  *
- * Targets the Docassemble class set (div.dasections, .daactive,
- * .daclickable, .danav, .daquestion, …) seen in
- * docassemble_webapp/static/app/app.css. Layered on top of Docassemble's
- * Bootstrap 5 chrome — no template overrides, no extra HTML, just CSS.
- *
- * Theme awareness
- *   Docassemble flags dark mode with `data-bs-theme="dark"` on <html>
- *   (Bootstrap 5 convention; see docassemble_webapp/templates/base.html).
- *   We define every color as a CSS custom property in :root for the
- *   light palette, then override under [data-bs-theme="dark"] for dark.
- *   The rest of the rules reference var(--sd-*), so toggling dark mode
- *   in Smart-Docx propagates cleanly into the iframe.
- *
- * What's themed
- *   - Section nav (left rail): white panel light / slate panel dark,
- *     indented list, blue active highlight with left accent bar, green
- *     tick before clickable entries (proxy for HotDocs' completed
- *     section indicator).
- *   - Question pane (right): pale-blue title-bar light / muted-blue
- *     dark, HotDocs-style form layout, generous spacing.
- *   - Bottom action bar: Previous / Next / Finish in HotDocs blue.
- *   - Progress bar: thin green stripe.
- *   - Compact desktop density (≥ lg) matching Bootstrap btn-sm scale.
- *
- * What's NOT themed (would need template overrides, deferred):
- *   - Top-of-page meta-sidebar with "Document preview / Answer summary
- *     / Help / Return" — Docassemble has no native placeholders.
- *   - Per-DAList-item nesting in the rail — needs Pyle's table-screen
- *     pattern for templates that have list inputs.
- *   - True per-section "completed" tracking — Docassemble doesn't
- *     expose it; we use `.daclickable` as a "reachable by click" proxy.
+ * Combines CSS layered on top of Docassemble's Bootstrap 5 chrome with
+ * the JS orchestrator in init-data_en.yml that adds:
+ *   • [data-sd-status]    — "active" / "complete" tags on rail buttons
+ *   • [data-sd-group]     — top-level group rows (with chevrons)
+ *   • [data-sd-collapsed] — open/closed state on groups + their children
+ *   • body.sd-screen-final — set on the last screen so we relabel
+ *                            Continue → Finish via CSS content
  * ─────────────────────────────────────────────────────────────────── */
 
 /* Light palette (default) */
@@ -53,10 +29,6 @@
   --sd-button-secondary-bg: #FFFFFF;
 }
 
-/* Dark palette — same theme, recoloured. Triggered by Bootstrap 5's
-   data-bs-theme attribute Docassemble sets when its dark mode is on
-   (which is what Smart-Docx's dark-mode toggle propagates into the
-   iframe). */
 [data-bs-theme="dark"] {
   --sd-primary: #6BA8DD;
   --sd-primary-hover: #8FBCE5;
@@ -75,11 +47,7 @@
   --sd-button-secondary-bg: #1E293B;
 }
 
-/* Hide Docassemble's top nav — the interview is iframed inside Smart-
-   Docx's own chrome, so its navbar would just duplicate. */
-.navbar {
-  display: none;
-}
+.navbar { display: none; }
 
 body {
   background: var(--sd-page-bg);
@@ -92,7 +60,7 @@ body {
 
 div.danavdiv {
   margin-top: 0;
-  padding: 16px 0;
+  padding: 12px 0;
   background: var(--sd-rail-bg);
   border-right: 1px solid var(--sd-border);
   min-height: 100vh;
@@ -111,7 +79,7 @@ div.dasections .btn {
   font-size: 14px;
   font-weight: 500;
   color: var(--sd-text);
-  padding: 10px 16px 10px 28px;
+  padding: 9px 16px 9px 36px;
   border-radius: 0;
   background: transparent;
   border: none;
@@ -120,19 +88,59 @@ div.dasections .btn {
   white-space: normal;
 }
 
-/* Tick mark before clickable sections (proxy for "in the user's
-   outline, reachable by click"). Mirrors HotDocs' green-circle check. */
-div.dasections a.btn.daclickable::before {
-  content: "✓";
+div.dasections .btn:hover {
+  text-decoration: none;
+  background: rgba(0, 87, 139, 0.06);
+  color: var(--sd-primary);
+}
+
+[data-bs-theme="dark"] div.dasections .btn:hover {
+  background: rgba(107, 168, 221, 0.08);
+}
+
+/* ── Top-level GROUP rows (chevron, no green check, click toggles) ─ */
+div.dasections .btn[data-sd-group] {
+  font-weight: 600;
+  cursor: pointer;
+  padding-left: 30px;
+}
+
+/* Chevron — points right when collapsed, down when expanded */
+div.dasections .btn[data-sd-group]::before {
+  content: "";
   position: absolute;
-  left: 8px;
+  left: 12px;
+  top: 50%;
+  width: 0;
+  height: 0;
+  margin-top: -4px;
+  border-style: solid;
+  border-width: 4px 0 4px 6px;
+  border-color: transparent transparent transparent var(--sd-muted);
+  transition: transform 0.15s ease;
+  transform-origin: 2px 50%;
+}
+
+div.dasections .btn[data-sd-group][data-sd-collapsed="0"]::before {
+  transform: rotate(90deg);
+}
+
+/* Hide a group's children when collapsed */
+div.dasections .dainlineinside[data-sd-collapsed="1"] {
+  display: none;
+}
+
+/* ── Completion-only green check on LEAF (sub-section) rows ─────── */
+div.dasections .btn[data-sd-status="complete"]::after,
+div.dasections .btn[data-sd-status="active"]::after {
+  content: "";
+  position: absolute;
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--sd-tick);
-  color: #ffffff;
   font-size: 11px;
   font-weight: 700;
   display: inline-flex;
@@ -141,22 +149,29 @@ div.dasections a.btn.daclickable::before {
   line-height: 1;
 }
 
-div.dasections a.btn.daclickable {
-  color: var(--sd-text);
+div.dasections .btn[data-sd-status="complete"]::after {
+  content: "✓";
+  background: var(--sd-tick);
+  color: #ffffff;
 }
 
-div.dasections a.btn.daclickable:hover {
-  background: var(--sd-active-bg);
-  color: var(--sd-primary);
-  text-decoration: none;
+/* Active leaf: hollow circle so it visually differs from complete */
+div.dasections .btn[data-sd-status="active"]::after {
+  content: "";
+  background: var(--sd-pane-bg);
+  border: 2px solid var(--sd-primary);
+  width: 14px;
+  height: 14px;
 }
 
-/* Active section — pale-blue fill + left accent bar. Override Docassemble's
-   default yellow `.daactive` (and the bright Bootstrap btn-primary blue
-   that hits when the active item is rendered as a primary button). */
+/* Don't draw the leaf check on group rows (they have a chevron). */
+div.dasections .btn[data-sd-group][data-sd-status]::after {
+  display: none;
+}
+
+/* Active section — pale-blue fill + left accent bar */
 div.dasections .btn.daactive,
 div.dasections .daactive,
-div.dasections .btn.btn-primary,
 div.dasections .btn.btn-primary.daactive {
   background: var(--sd-active-bg) !important;
   color: var(--sd-primary) !important;
@@ -164,40 +179,44 @@ div.dasections .btn.btn-primary.daactive {
   border-left: 3px solid var(--sd-primary);
 }
 
-/* Sub-items (DAList children inside .dainlineinside) get an extra
-   indent so they read as a hierarchy. */
+/* Sub-items: extra indent so hierarchy reads */
 div.dasections div.dainlineinside .btn {
   padding-left: 48px;
   font-size: 13px;
   font-weight: 400;
   color: var(--sd-muted);
 }
-
-div.dasections div.dainlineinside a.btn.daclickable::before {
-  left: 28px;
+div.dasections div.dainlineinside .btn[data-sd-status="complete"]::after,
+div.dasections div.dainlineinside .btn[data-sd-status="active"]::after {
+  left: 24px;
   width: 14px;
   height: 14px;
   font-size: 10px;
 }
+div.dasections div.dainlineinside .btn[data-sd-status="active"]::after {
+  width: 12px;
+  height: 12px;
+}
 
-/* ─── Question pane (right) ─────────────────────────────────────── */
+/* ─── Section title bar (above the question) ────────────────────── */
+
+.sd-section-title-bar {
+  background: var(--sd-active-bg);
+  color: var(--sd-primary);
+  padding: 12px 24px;
+  margin: 0 -15px 16px -15px;  /* extend to pane edges */
+  font-size: 16px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--sd-border);
+}
+
+/* ─── Question pane ──────────────────────────────────────────────── */
 
 #dadiv,
 .daquestion {
   background: var(--sd-pane-bg);
   color: var(--sd-text);
   padding: 0;
-}
-
-.dasectionheading,
-h1.daquestionheading {
-  background: var(--sd-active-bg);
-  color: var(--sd-primary);
-  padding: 14px 24px;
-  margin: 0 0 16px 0;
-  font-size: 18px;
-  font-weight: 600;
-  border-bottom: 1px solid var(--sd-border);
 }
 
 .daquestion .form-control,
@@ -267,17 +286,31 @@ h1.daquestionheading {
   color: var(--sd-primary);
 }
 
-/* ─── Progress bar (thin green stripe at the bottom) ────────────── */
+/* On the final mandatory screen (`done` section), the JS sets
+   body.sd-screen-final. Hide DA's default Continue text and overlay
+   "Finish" via the button's pseudo-element so the visual reads HotDocs-
+   style without changing DA's underlying button name. */
+body.sd-screen-final .danavlinkbuttons,
+body.sd-screen-final button[name="_continue"],
+body.sd-screen-final #daQuestionSubmit {
+  font-size: 0;  /* hide the original "Continue" label */
+}
+body.sd-screen-final .danavlinkbuttons::after,
+body.sd-screen-final button[name="_continue"]::after,
+body.sd-screen-final #daQuestionSubmit::after {
+  content: "Finish";
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ─── Progress bar ──────────────────────────────────────────────── */
 
 div.daprogress .progress {
   height: 4px;
   background: transparent;
   border-radius: 0;
 }
-
-div.daprogress .progress-bar {
-  background: var(--sd-progress);
-}
+div.daprogress .progress-bar { background: var(--sd-progress); }
 
 /* ─── Mobile: collapse the rail above the question pane ─────────── */
 
@@ -289,29 +322,32 @@ div.daprogress .progress-bar {
     padding: 8px 0;
   }
   div.dasections .btn {
-    padding: 8px 12px 8px 28px;
+    padding: 8px 12px 8px 36px;
     font-size: 13px;
+  }
+  .sd-section-title-bar {
+    padding: 10px 16px;
+    font-size: 15px;
   }
 }
 
 /* ─── Desktop: HotDocs-compact density (≥ lg) ─────────────────────
- * HotDocs is noticeably denser than Bootstrap's defaults — labels
- * ~12px, inputs ~13px with ~5px padding, buttons ~13px. We hold
- * comfortable Material-style density on phones (mobile-first) and
- * shrink everything one notch up at the lg breakpoint where the user
- * is on a real keyboard/mouse and screen real estate is at a premium.
- * Mirrors Bootstrap's `.btn-sm` / `.form-control-sm` scale.
+ * HotDocs is noticeably denser than Bootstrap defaults. Hold mobile-
+ * comfortable density on phones; shrink on the lg breakpoint where
+ * the user is on a real keyboard/mouse.
  * ───────────────────────────────────────────────────────────────── */
 
 @media (min-width: 992px) {
   div.danavdiv { padding: 10px 0; }
   div.dasections { line-height: 1.35; }
   div.dasections .btn {
-    padding: 7px 14px 7px 26px;
+    padding: 7px 14px 7px 34px;
     font-size: 13px;
   }
-  div.dasections a.btn.daclickable::before {
-    left: 7px;
+  div.dasections .btn[data-sd-group] { padding-left: 28px; }
+  div.dasections .btn[data-sd-status="complete"]::after,
+  div.dasections .btn[data-sd-status="active"]::after {
+    left: 11px;
     width: 14px;
     height: 14px;
     font-size: 10px;
@@ -320,18 +356,18 @@ div.daprogress .progress-bar {
     padding-left: 42px;
     font-size: 12px;
   }
-  div.dasections div.dainlineinside a.btn.daclickable::before {
-    left: 24px;
+  div.dasections div.dainlineinside .btn[data-sd-status="complete"]::after,
+  div.dasections div.dainlineinside .btn[data-sd-status="active"]::after {
+    left: 22px;
     width: 12px;
     height: 12px;
     font-size: 9px;
   }
 
-  .dasectionheading,
-  h1.daquestionheading {
-    padding: 10px 20px;
-    margin: 0 0 10px 0;
-    font-size: 15px;
+  .sd-section-title-bar {
+    padding: 9px 20px;
+    margin: 0 -15px 12px -15px;
+    font-size: 14px;
   }
 
   .daquestion .form-control,
@@ -345,13 +381,8 @@ div.daprogress .progress-bar {
     font-size: 13px;
     height: calc(1.5em + 0.5rem + 2px);
   }
-
   .daquestion textarea { height: auto; }
-
-  .daquestion label {
-    margin-bottom: 4px;
-    font-size: 12px;
-  }
+  .daquestion label { margin-bottom: 4px; font-size: 12px; }
 
   .danavlinkbuttons,
   .daquestion .btn-da-primary,
@@ -361,6 +392,11 @@ div.daprogress .progress-bar {
     padding: 5px 14px;
     font-size: 13px;
     line-height: 1.5;
+  }
+  body.sd-screen-final .danavlinkbuttons::after,
+  body.sd-screen-final button[name="_continue"]::after,
+  body.sd-screen-final #daQuestionSubmit::after {
+    font-size: 13px;
   }
 
   div.daprogress .progress { height: 3px; }

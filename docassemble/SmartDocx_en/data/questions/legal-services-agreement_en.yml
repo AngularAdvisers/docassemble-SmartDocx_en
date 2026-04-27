@@ -20,19 +20,28 @@ metadata:
   revision_date: 2024-04-09
 ---
 # ─── Sections ───────────────────────────────────────────────────────
-# Each section is `keyword: "Display Label"`. The keyword MUST be a
-# valid Python identifier (no spaces / apostrophes) because Docassemble
-# matches it against defined events and variables — the display label
-# is what the sidebar renders. `progressive: False` reveals every
-# section from the start, matching HotDocs' outline UX.
+# HotDocs-style hierarchy: top-level entries are GROUPS that expand to
+# show their child questions. Group keywords (client_info, lawyer_info,
+# agreement) are display-only — no `event:` handler — so clicking them
+# toggles the group open/closed via JS in init-data_en.yml. Child
+# keywords (client_name, client_address, …) ARE wired to events that
+# `force_ask` the section's primary variable for click-to-jump nav.
+# `progressive: False` so every group is visible in the rail from screen
+# 1, matching HotDocs' outline.
 sections:
-  - client_name: "Client's Name"
-  - client_address: "Client's Address"
-  - lawyer_name: "Lawyer's Name"
-  - lawyer_address: "Lawyer's Address"
-  - fee_amount: "Fee Amount"
-  - signing_date: "Signing Date"
-  - sign: "Signature"
+  - client_info: "Client Information"
+    subsections:
+      - client_name: "Client's Name"
+      - client_address: "Client's Address"
+  - lawyer_info: "Lawyer Information"
+    subsections:
+      - lawyer_name: "Lawyer's Name"
+      - lawyer_address: "Lawyer's Address"
+  - agreement: "Agreement Details"
+    subsections:
+      - fee_amount: "Fee Amount"
+      - signing_date: "Signing Date"
+      - sign: "Signature"
   - done: "Completed"
 progressive: False
 ---

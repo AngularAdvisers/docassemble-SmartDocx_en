@@ -7,6 +7,14 @@ code: |
 # Using `default screen parts` with `post` puts the <script> below the
 # question body so the function is defined before any button calls it.
 default screen parts:
+  # HotDocs-style section title bar above the question. Renders the
+  # active section's display label (with the parent group prepended for
+  # grouped sections, e.g. "Client Information · Client's Name") so the
+  # user always knows which outline node they're filling in.
+  pre: |
+    % if defined('nav') and nav.get_section() :
+    <div class="sd-section-title-bar"><% sec = nav.get_section(display=True) or '' %>${ sec }</div>
+    % endif
   post: |
     <script>
       function smartDocxSaveAndExit(btn) {
@@ -53,6 +61,163 @@ default screen parts:
           try {
             window.parent.postMessage({ type: 'smartdocx:theme-request' }, '*');
           } catch (e) { /* parent in different origin pre-handshake — ignore */ }
+        }
+      })();
+
+      // ─── HotDocs-style outline orchestrator ────────────────────────
+      // Three behaviours layered on top of Docassemble's section nav:
+      //
+      //   1. COLLAPSIBLE GROUPS — top-level sections that have
+      //      subsections (`client_info`, `lawyer_info`, `agreement` in
+      //      legal-services-agreement_en.yml) get a chevron and expand/
+      //      collapse on click. Collapsed groups hide their children.
+      //      Open/closed state persists per-interview via sessionStorage.
+      //
+      //   2. COMPLETION TRACKING — the section the user is currently on
+      //      (DA renders it with `.daactive`) gets recorded in
+      //      sessionStorage as "visited". On every render, the script
+      //      walks the visited set and marks each visited <button> with
+      //      `data-sd-status="complete"`, which the CSS targets to draw
+      //      the green ✓. Sections the user hasn't reached yet stay
+      //      check-less. (Honest approximation of HotDocs' "answered"
+      //      state — DA doesn't expose per-section completion natively.)
+      //
+      //   3. FINISH BUTTON — when the active section is `done` (the last
+      //      mandatory screen), add a body class `sd-screen-final` so
+      //      the CSS swaps the Continue button label to "Finish".
+      // ────────────────────────────────────────────────────────────────
+      (function () {
+        var INTERVIEW_KEY = 'sd-visited-' + (window.location.pathname || 'i');
+        function loadVisited() {
+          try {
+            var raw = sessionStorage.getItem(INTERVIEW_KEY);
+            return raw ? JSON.parse(raw) : {};
+          } catch (e) { return {}; }
+        }
+        function saveVisited(map) {
+          try { sessionStorage.setItem(INTERVIEW_KEY, JSON.stringify(map)); }
+          catch (e) { /* ignore quota / private-mode errors */ }
+        }
+
+        function sectionKeyFromButton(btn) {
+          // DA renders each section as `<a class="btn daclickable" href="…?action=run&from=...&action_argument=<keyword>">`
+          // or as a non-clickable `<button>` for groups. Extract the
+          // keyword from data-sd-key (we set it on first run) or from
+          // the URL's action_argument query.
+          if (btn.dataset.sdKey) return btn.dataset.sdKey;
+          var href = btn.getAttribute('href') || '';
+          var m = href.match(/action_argument=([^&]+)/);
+          if (m) {
+            try {
+              btn.dataset.sdKey = decodeURIComponent(m[1]);
+              return btn.dataset.sdKey;
+            } catch (e) { /* malformed URL — fall through */ }
+          }
+          // Group sections (no href, no event) — derive a stable id from
+          // their text content so we can target them as collapse roots.
+          var label = (btn.textContent || '').trim().toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+          btn.dataset.sdKey = 'group_' + label;
+          return btn.dataset.sdKey;
+        }
+
+        function decorateSections() {
+          var rail = document.querySelector('div.dasections');
+          if (!rail) return;
+
+          var visited = loadVisited();
+
+          // Mark the active section as visited (DA flags it with .daactive).
+          var activeBtn = rail.querySelector('.daactive');
+          var activeKey = activeBtn ? sectionKeyFromButton(activeBtn) : null;
+          if (activeKey) {
+            visited[activeKey] = true;
+            saveVisited(visited);
+          }
+
+          // Walk every section button. Tag groups (have a sibling
+          // .dainlineinside) and tag visited leaves.
+          var topItems = rail.querySelectorAll(':scope > .danav, :scope > .danav > .danavlink, :scope > div, :scope > a, :scope > button, :scope > span');
+          // DA's exact outer structure varies by version — fall back to
+          // ALL clickable .btn entries inside the rail.
+          rail.querySelectorAll('.btn').forEach(function (btn) {
+            var key = sectionKeyFromButton(btn);
+            if (visited[key] && !btn.classList.contains('daactive')) {
+              btn.dataset.sdStatus = 'complete';
+            } else if (btn.classList.contains('daactive')) {
+              btn.dataset.sdStatus = 'active';
+            }
+          });
+
+          // Identify groups: any top-level item that is followed by a
+          // .dainlineinside container. Mark them with [data-sd-group]
+          // and add a chevron + click toggle.
+          rail.querySelectorAll('.dainlineinside').forEach(function (children) {
+            var groupBtn = children.previousElementSibling
+              && children.previousElementSibling.matches('.btn')
+              ? children.previousElementSibling
+              : null;
+            if (!groupBtn) {
+              // Some DA versions wrap differently. Walk siblings until
+              // we find the preceding .btn.
+              var n = children.previousElementSibling;
+              while (n && !n.matches && !n.classList) n = n.previousElementSibling;
+              if (n && n.querySelector) groupBtn = n.querySelector('.btn');
+            }
+            if (!groupBtn) return;
+            groupBtn.dataset.sdGroup = '1';
+            // Default expanded; honor sessionStorage.
+            var groupKey = sectionKeyFromButton(groupBtn);
+            var collapseKey = INTERVIEW_KEY + ':collapsed:' + groupKey;
+            var collapsed = sessionStorage.getItem(collapseKey) === '1';
+            children.dataset.sdCollapsed = collapsed ? '1' : '0';
+            groupBtn.dataset.sdCollapsed = collapsed ? '1' : '0';
+            // Bind click once.
+            if (!groupBtn.dataset.sdGroupBound) {
+              groupBtn.dataset.sdGroupBound = '1';
+              groupBtn.addEventListener('click', function (ev) {
+                // If the group itself isn't a defined event/variable,
+                // DA renders it as a non-clickable label. Either way,
+                // clicking should JUST toggle — never navigate.
+                ev.preventDefault();
+                ev.stopPropagation();
+                var nowCollapsed = children.dataset.sdCollapsed !== '1';
+                children.dataset.sdCollapsed = nowCollapsed ? '1' : '0';
+                groupBtn.dataset.sdCollapsed = nowCollapsed ? '1' : '0';
+                try { sessionStorage.setItem(collapseKey, nowCollapsed ? '1' : '0'); }
+                catch (e) {}
+              }, true);  // capture so we beat any default DA handler
+            }
+          });
+
+          // Auto-expand the group containing the active section so the
+          // user always sees where they are.
+          if (activeBtn) {
+            var ancestor = activeBtn.closest('.dainlineinside');
+            if (ancestor && ancestor.dataset.sdCollapsed === '1') {
+              ancestor.dataset.sdCollapsed = '0';
+              var groupBtn2 = ancestor.previousElementSibling
+                && ancestor.previousElementSibling.querySelector
+                ? ancestor.previousElementSibling.querySelector('.btn')
+                : null;
+              if (groupBtn2) groupBtn2.dataset.sdCollapsed = '0';
+            }
+          }
+
+          // Finish-button screen detection.
+          if (activeKey === 'done') {
+            document.body.classList.add('sd-screen-final');
+          } else {
+            document.body.classList.remove('sd-screen-final');
+          }
+        }
+
+        // Run after DOM is ready. DA pages are server-rendered so DOMContentLoaded
+        // is enough — no SPA-style virtual DOM races.
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', decorateSections);
+        } else {
+          decorateSections();
         }
       })();
     </script>
