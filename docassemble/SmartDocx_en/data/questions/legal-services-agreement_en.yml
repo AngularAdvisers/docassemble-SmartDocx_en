@@ -19,19 +19,73 @@ metadata:
       organization: Andjelkovic Law Firm
   revision_date: 2024-04-09
 ---
+# ─── Sections ───────────────────────────────────────────────────────
+# Each section is `keyword: "Display Label"`. The keyword MUST be a
+# valid Python identifier (no spaces / apostrophes) because Docassemble
+# matches it against defined events and variables — the display label
+# is what the sidebar renders. `progressive: False` reveals every
+# section from the start, matching HotDocs' outline UX.
 sections:
-  - Client's Name
-  - Client's Address
-  - Lawyer's Name
-  - Lawyer's Address
-  - Fee Amount
-  - Signing Date
-  - Signature
-  - Completed
+  - client_name: "Client's Name"
+  - client_address: "Client's Address"
+  - lawyer_name: "Lawyer's Name"
+  - lawyer_address: "Lawyer's Address"
+  - fee_amount: "Fee Amount"
+  - signing_date: "Signing Date"
+  - sign: "Signature"
+  - done: "Completed"
+progressive: False
 ---
 features:
   navigation: True
   progress bar: True
+---
+# ─── Section-jump navigation ────────────────────────────────────────
+# When a sidebar entry's keyword matches a defined `event:`, clicking
+# the entry fires that event. Each handler below uses `force_ask` on
+# the section's primary variable to re-queue the relevant question.
+# After submit, Docassemble resumes the mandatory flow at the first
+# still-undefined variable — HotDocs-style "click to revisit / jump
+# to any section" navigation.
+#
+# Pattern lifted from docassemble's official example
+# `examples/sections-non-progressive.yml`.
+---
+event: client_name
+code: |
+  force_ask('lsa_client_individual.name.first')
+---
+event: client_address
+code: |
+  force_ask('lsa_client_address.address')
+---
+event: lawyer_name
+code: |
+  force_ask('lsa_lawyer_individual.name.first')
+---
+event: lawyer_address
+code: |
+  force_ask('lsa_lawyer_address.address')
+---
+event: fee_amount
+code: |
+  force_ask('lsa_fee')
+---
+event: signing_date
+code: |
+  force_ask('lsa_date_signed')
+---
+event: sign
+code: |
+  force_ask('lsa_client_signature')
+---
+# Note: no `event: done` handler. The Completed screen is a review
+# block whose mandatory question defines no variable — `force_ask` has
+# nothing to surface for `doc_file` (it's defined by the `attachment:`
+# block, which is not a question). Leaving "done" without an event
+# means it appears in the sidebar as a non-clickable label — which is
+# fine, because every other section click lands back on Completed
+# naturally via the mandatory flow once all variables are defined.
 ---
 objects:
   - lsa_client_individual: Individual
@@ -45,7 +99,7 @@ code: |
 ---
 mandatory: True
 progress: 1
-section: Client's Name
+section: client_name
 question: |
   What is the client's name?
 fields:
@@ -63,7 +117,7 @@ fields:
 ---
 mandatory: True
 progress: 15
-section: Client's Address
+section: client_address
 question: |
   What is the Client's address?
 fields:
@@ -88,7 +142,7 @@ fields:
 ---
 mandatory: True
 progress: 30
-section: Lawyer's Name
+section: lawyer_name
 question: |
   What is the lawyer's name?
 fields:
@@ -106,7 +160,7 @@ fields:
 ---
 mandatory: True
 progress: 45
-section: Lawyer's Address
+section: lawyer_address
 question: |
   What is the Lawyer's address?
 fields:
@@ -131,7 +185,7 @@ fields:
 ---
 mandatory: True
 progress: 60
-section: Fee Amount
+section: fee_amount
 question: |
   What is the legal service agreement fee amount?
 fields:
@@ -148,7 +202,7 @@ code: |
 ---
 mandatory: True
 progress: 75
-section: Signing Date
+section: signing_date
 question: |
   What date did the client sign the agreement?
 fields:
@@ -158,7 +212,7 @@ fields:
 mandatory: True
 question: Please sign below
 progress: 90
-section: Signature
+section: sign
 subquestion: |
   By signing below, you acknowledge that your answers to the questions
   in this interview were truthful, to the best of your knowledge and you
@@ -174,7 +228,7 @@ under: |
 ---
 mandatory: True
 progress: 100
-section: Completed
+section: done
 question: |
   The following document has been created.
 subquestion: |
