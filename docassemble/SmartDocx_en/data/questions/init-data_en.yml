@@ -902,9 +902,17 @@ default screen parts:
           prev.className = 'sd-btn sd-btn--prev';
           prev.innerHTML = '<span class="sd-btn-glyph">◀</span> Previous';
 
-          // Mirror the rail-querying logic from decorateRail() so we
-          // end up with the same vertical nav even if DA changes its
-          // wrapper classes between releases.
+          // Find the previous leaf to jump to.
+          //   • Regular question  → leaves[activeIdx - 1]
+          //   • Completed (done)  → last leaf (signature). The `done`
+          //     section has no event handler, so its rail link is
+          //     `a.danavlink` WITHOUT `.daclickable`; it never appears
+          //     in `leaves`. Use the `isFinal` flag (set by paint()
+          //     based on activeKey === 'done' || 'completed') as a
+          //     dedicated signal — more reliable than trying to find
+          //     the active label via selectors that have to vary by
+          //     DA version.
+          //   • First leaf or unknown → disable the button.
           var railEl =
             document.querySelector('div.danavdiv nav.danavlinks.danav-vertical') ||
             document.querySelector('div.danavdiv .danav-vertical.danavlinks') ||
@@ -915,30 +923,33 @@ default screen parts:
           for (var i = 0; i < leaves.length; i++) {
             if (leaves[i].classList.contains('active')) { activeIdx = i; break; }
           }
-          // If no .daclickable leaf is active, the active link may be
-          // a non-clickable label like "Completed" (no event handler,
-          // so it's NOT in `leaves`). Treat that case as "active sits
-          // AFTER the last leaf" so Previous goes to the last leaf
-          // instead of incorrectly disabling.
-          if (activeIdx === -1 && railEl && railEl.querySelector('a.danavlink.active') && leaves.length > 0) {
-            activeIdx = leaves.length;
+
+          var prevLeaf = null;
+          if (activeIdx > 0) {
+            prevLeaf = leaves[activeIdx - 1];
+          } else if (isFinal && leaves.length > 0) {
+            // On the final/Completed screen, "Previous" means the
+            // last actual data-entry step.
+            prevLeaf = leaves[leaves.length - 1];
+          } else if (activeIdx === -1 && leaves.length > 0 &&
+                     railEl && railEl.querySelector('a.danavlink.active')) {
+            // Belt-and-braces: some other non-clickable label is the
+            // active rail link (e.g. a custom progress-only entry).
+            // Jump to the last leaf.
+            prevLeaf = leaves[leaves.length - 1];
           }
 
-          if (activeIdx > 0) {
+          if (prevLeaf) {
             // DA binds `.danavlinks a.daclickable` clicks to
             // `da_action_perform("_da_priority_action", …)`, so a
             // native click() on the previous leaf triggers a real
             // section jump.
-            var prevLeaf = leaves[activeIdx - 1];
             prev.addEventListener('click', function () { prevLeaf.click(); });
           } else {
-            // First leaf (or rail not found): there is no previous
-            // section, so Previous must do nothing. Earlier we fell
-            // back to DA's `#dabackbutton` here, but `_back_one` after
-            // section-jump force_asks pushed the user FORWARD in the
-            // visible flow — the "press Previous on top, jumps to
-            // Next" bug. Render the button as disabled so the user
-            // gets visual feedback that there's nowhere to go back to.
+            // No previous section — render disabled. Earlier code
+            // fell back to DA's `#dabackbutton` here, but `_back_one`
+            // after force_asks pushed the user FORWARD in the visible
+            // flow (the "press Previous on top, jumps to Next" bug).
             prev.disabled = true;
             prev.classList.add('sd-btn--disabled');
             prev.setAttribute('aria-disabled', 'true');
