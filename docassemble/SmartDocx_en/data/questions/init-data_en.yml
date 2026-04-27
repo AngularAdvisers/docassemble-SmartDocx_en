@@ -53,7 +53,44 @@ default screen parts:
         background: var(--sd-page-bg);
         color: var(--sd-text);
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        padding: 0 !important;
         padding-bottom: 72px !important;
+        margin: 0 !important;
+      }
+      /* Strip top/side padding from DA's body wrapper so the rail and
+         question pane sit flush at the top-left of the iframe. */
+      .dabody, .da-pad-for-navbar {
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      /* HotDocs layout: outline rail + question pane SIDE BY SIDE at
+         every viewport. DA's default Bootstrap row goes to wrap-stack
+         on viewports where col-md-3 / col-md-9 don't both fit (which
+         happens when the parent iframe is narrow). Force flex-row,
+         no-wrap, and zero gutters so they always sit horizontally
+         flush. */
+      .row.tab-content {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        margin: 0 !important;
+      }
+      .row.tab-content > [class*="col"] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+      /* DA emits a horizontal-nav duplicate ALSO inside the row for
+         narrow viewports (col d-md-none). Since we're forcing the
+         vertical rail to show always, the horizontal copy is just
+         dead weight stacking above the pane — kill it. */
+      .row.tab-content > .col.d-md-none { display: none !important; }
+      /* Force the vertical rail to render at every viewport (override
+         Bootstrap's `d-none d-md-block` responsive hide). */
+      div.danavdiv { display: block !important; }
+      /* The question pane stretches to fill the rest of the row. */
+      .row.tab-content > #daquestion {
+        flex: 1 1 auto !important;
+        max-width: none !important;
       }
       /* Outline header — tight, no left icon, "Outline" in title-case
          (no uppercase), collapse/expand chevron pushed to the RIGHT. */
