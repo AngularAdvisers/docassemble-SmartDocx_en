@@ -167,11 +167,9 @@ default screen parts:
          the question pane keeps its proportional size. */
       div.danavdiv.offset-xl-1 { margin-left: 0 !important; }
 
-      /* Section row layout — fixed left padding leaves room for
-         [twisty (~16px wide)] [status check (~16px)] = 38px on the
-         left of every row. Order is twisty → check → text from left
-         to right, so when a group is collapsed the user can still
-         see its completion state via the check beside the twisty. */
+      /* Section row layout: padding-left reserves room for
+         [gray twisty 18px @ left:6px] [green check 16px @ left:24px].
+         Text starts at 42px. */
       a.danavlink {
         color: var(--sd-text);
         padding-left: 42px !important;
@@ -180,21 +178,29 @@ default screen parts:
       }
       a.danavlink:hover { color: var(--sd-primary); }
 
-      /* GROUP labels — non-clickable text; the twisty handles
-         collapse via its own click target (injected by JS). */
+      /* DA injects its OWN `.toggler` span inside each group's
+         `<a class="danavlink">` — that's the BLUE triangle the user
+         saw alongside our gray collapse button. Hide it via CSS so
+         only our working gray button remains. (We also strip non-
+         text child nodes from group links in JS as belt-and-braces.) */
+      a.danavlink .toggler {
+        display: none !important;
+      }
+
+      /* GROUP labels — non-clickable text; collapse handled by our
+         injected gray button. */
       a.danavlink:not(.daclickable) {
         font-weight: 700;
         cursor: default;
       }
 
-      /* Group row wrapper — relative-positioned so we can absolutely-
-         position both the twisty and the eventual ::after status check. */
+      /* Group row wrapper — relative-positioned so the gray collapse
+         button can absolutely-position next to the link text. */
       .sd-group-row {
         position: relative;
       }
-      /* Twisty — sits at the LEFT of the group row, before the check
-         and text. Default downward arrow (▼) for expanded; flips to
-         right (▶) when JS toggles `[data-sd-collapsed="1"]`. */
+      /* Gray collapse button — sits at the LEFT of the group row,
+         left of the check and text. Working click handler in JS. */
       .sd-group-collapse-btn {
         position: absolute;
         left: 6px; top: 50%;
@@ -586,27 +592,20 @@ default screen parts:
             if (nested.style.display === 'none') nested.style.display = '';
           });
 
-          // 2b. INJECT a single collapse/expand icon on the RIGHT of
-          //     every group row. The icon is its own clickable button
-          //     so the group's text label stays a non-interactive
-          //     label — clicking the text does NOT collapse, only the
-          //     button does. (Per the user's spec: "There shouldn't be
-          //     a twistie there should be a collapse and expand icon
-          //     just right of the text.")
+          // 2b. GROUP DECORATION — strip DA's injected .toggler arrow
+          //     (the BLUE triangle the user wants gone — also hidden
+          //     via CSS, this is belt-and-braces), wrap each group
+          //     row, inject our own GRAY collapse button on the left,
+          //     and compute aggregate status for the group's check.
           rail.querySelectorAll('a.danavlink:not(.daclickable)').forEach(function (groupLink) {
-            // Skip if we've already wrapped this group.
             if (groupLink.parentElement && groupLink.parentElement.classList.contains('sd-group-row')) return;
 
-            // Defensive: if DA's JS injected any non-text child nodes
-            // (icons, spans, .toggler arrows, etc.) into the group
-            // link, strip them — they were producing extra "twisties"
-            // alongside our collapse button.
+            // Strip non-text children DA injects (the .toggler span).
             for (var i = groupLink.childNodes.length - 1; i >= 0; i--) {
               var n = groupLink.childNodes[i];
-              if (n.nodeType !== 3) groupLink.removeChild(n);  // 3 = text node
+              if (n.nodeType !== 3) groupLink.removeChild(n);
             }
-            // Find the matching .danavnested sibling (the children
-            // container that follows this group label).
+            // Find the matching .danavnested sibling.
             var nested = null;
             var sib = groupLink.nextElementSibling;
             while (sib) {
@@ -616,7 +615,7 @@ default screen parts:
               }
               sib = sib.nextElementSibling;
             }
-            if (!nested) return;  // not a group, no children — skip
+            if (!nested) return;
 
             // Wrap the link in a row so the collapse button can sit
             // absolutely positioned next to it.
@@ -625,8 +624,6 @@ default screen parts:
             groupLink.parentElement.insertBefore(row, groupLink);
             row.appendChild(groupLink);
 
-            // Use a stable per-group sessionStorage key so collapse
-            // state survives screen reloads within the interview.
             var collapseKey = INTERVIEW_KEY + ':collapsed:' + (groupLink.textContent || '').trim();
             var collapsed = sessionStorage.getItem(collapseKey) === '1';
             if (collapsed) nested.classList.add('sd-collapsed');
@@ -646,11 +643,9 @@ default screen parts:
             });
             row.appendChild(btn);
 
-            // GROUP STATUS — when all leaves inside this group are
-            // visited, mark the group itself with `data-sd-status=
-            // "complete"` so the green ✓ shows up on the group row.
-            // That way the user can see the group's overall status
-            // even when it's collapsed and the children are hidden.
+            // Aggregate status — green ✓ on the group row when all
+            // leaves are visited. Survives collapse so the user can
+            // still see overall status when children are hidden.
             var leaves = nested.querySelectorAll('a.danavlink.daclickable');
             var allVisited = leaves.length > 0;
             var anyActive = false;
