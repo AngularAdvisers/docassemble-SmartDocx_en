@@ -301,6 +301,39 @@ default screen parts:
         font-weight: 500; color: var(--sd-text);
         margin-bottom: 6px; font-size: 13px;
       }
+
+      /* HotDocs-style stacked field layout — label ABOVE the input,
+         both full-width, flush left. DA's default emits each field
+         as a Bootstrap row with `col-md-4` (label, right-aligned) +
+         `col-md-8` (input). With the rail eating 240px the inputs
+         end up pushed far to the right inside the pane. Override the
+         row to a block layout so each field reads top-down. */
+      .daquestion .da-field-container.row,
+      .daquestion .da-form-group.row {
+        display: block !important;
+        margin: 0 0 14px 0 !important;
+      }
+      .daquestion .da-field-container.row > [class*="col-"],
+      .daquestion .da-form-group.row > [class*="col-"] {
+        flex: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+      /* Labels: left-aligned (was right-aligned via .datext-right),
+         block-level so they sit on their own line above the input. */
+      .daquestion .da-field-container label.datext-right,
+      .daquestion .da-form-group label.datext-right,
+      .daquestion .da-field-container label.col-form-label,
+      .daquestion .da-form-group label.col-form-label {
+        text-align: left !important;
+        display: block;
+      }
+      /* Pane container — top padding only, no horizontal padding on
+         field rows so inputs hug the section title bar's left edge. */
+      .daquestion .dafieldpart { padding: 0 !important; }
+      /* Buttons row: keep flush left below the form. */
+      .daquestion .da-button-set { padding: 0 !important; }
       /* Hide DA's native Continue / Back. Actual IDs are
          `#da-continue-button` and `#dabackToQuestion` — earlier
          selectors `button[name="_continue"]` / `#daQuestionSubmit`
