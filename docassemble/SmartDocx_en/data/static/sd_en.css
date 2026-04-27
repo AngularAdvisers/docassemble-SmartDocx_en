@@ -4,52 +4,79 @@
  * Targets the Docassemble class set (div.dasections, .daactive,
  * .daclickable, .danav, .daquestion, …) seen in
  * docassemble_webapp/static/app/app.css. Layered on top of Docassemble's
- * Bootstrap 4 chrome — no template overrides, no extra HTML, just CSS.
+ * Bootstrap 5 chrome — no template overrides, no extra HTML, just CSS.
  *
- * What's themed:
- *   - Section nav (left rail): white panel, indented list, blue active
- *     highlight with left accent bar, green tick before clickable
- *     entries (mirrors HotDocs' completed-section indicator).
- *   - Question pane (right pane): blue title-bar header, HotDocs-style
- *     form layout, generous spacing.
- *   - Bottom action bar: Previous / Next / Finish styled in HotDocs
- *     blue, sticky to the viewport bottom.
- *   - Progress bar: thin HotDocs green at the bottom.
+ * Theme awareness
+ *   Docassemble flags dark mode with `data-bs-theme="dark"` on <html>
+ *   (Bootstrap 5 convention; see docassemble_webapp/templates/base.html).
+ *   We define every color as a CSS custom property in :root for the
+ *   light palette, then override under [data-bs-theme="dark"] for dark.
+ *   The rest of the rules reference var(--sd-*), so toggling dark mode
+ *   in Smart-Docx propagates cleanly into the iframe.
+ *
+ * What's themed
+ *   - Section nav (left rail): white panel light / slate panel dark,
+ *     indented list, blue active highlight with left accent bar, green
+ *     tick before clickable entries (proxy for HotDocs' completed
+ *     section indicator).
+ *   - Question pane (right): pale-blue title-bar light / muted-blue
+ *     dark, HotDocs-style form layout, generous spacing.
+ *   - Bottom action bar: Previous / Next / Finish in HotDocs blue.
+ *   - Progress bar: thin green stripe.
+ *   - Compact desktop density (≥ lg) matching Bootstrap btn-sm scale.
  *
  * What's NOT themed (would need template overrides, deferred):
- *   - The top-of-page meta-sidebar with "Document preview / Answer
- *     summary / Help / Return" entries — Docassemble has no native
- *     placeholders for those.
- *   - Per-DAList-item nesting (e.g., "Testator's Children → 1, 2, 3").
- *     Not needed for the Legal Services Agreement (no list inputs);
- *     would need Pyle's table-screen pattern for templates that have
- *     DAList sections.
- *   - True "completed" tracking per section — Docassemble doesn't
- *     expose a per-section completion state. We use `.daclickable` as
- *     a proxy ("this section can be jumped to"), which approximates
- *     HotDocs' UX for a non-progressive interview.
+ *   - Top-of-page meta-sidebar with "Document preview / Answer summary
+ *     / Help / Return" — Docassemble has no native placeholders.
+ *   - Per-DAList-item nesting in the rail — needs Pyle's table-screen
+ *     pattern for templates that have list inputs.
+ *   - True per-section "completed" tracking — Docassemble doesn't
+ *     expose it; we use `.daclickable` as a "reachable by click" proxy.
  * ─────────────────────────────────────────────────────────────────── */
 
-/* HotDocs-ish palette. Defined as CSS custom props so they're easy to
-   tweak in one place if the brand color drifts. */
+/* Light palette (default) */
 :root {
-  --sd-primary: #00578B;          /* HotDocs navy */
+  --sd-primary: #00578B;
   --sd-primary-hover: #03446e;
-  --sd-accent: #4F92C8;           /* Mid blue */
-  --sd-active-bg: #E5EFF7;        /* Pale blue, currently-selected section */
-  --sd-rail-bg: #F4F6F8;          /* Side rail panel */
-  --sd-pane-bg: #FFFFFF;          /* Question pane */
-  --sd-page-bg: #FAFBFC;          /* Outer page */
+  --sd-accent: #4F92C8;
+  --sd-active-bg: #E5EFF7;
+  --sd-rail-bg: #F4F6F8;
+  --sd-pane-bg: #FFFFFF;
+  --sd-page-bg: #FAFBFC;
   --sd-border: #DCE1E7;
   --sd-text: #1F2937;
   --sd-muted: #64748B;
-  --sd-tick: #2A9D3D;             /* Completed-section green */
-  --sd-progress: #76D156;         /* Bottom progress bar green */
+  --sd-tick: #2A9D3D;
+  --sd-progress: #76D156;
+  --sd-input-bg: #FFFFFF;
+  --sd-input-text: #1F2937;
+  --sd-button-secondary-bg: #FFFFFF;
+}
+
+/* Dark palette — same theme, recoloured. Triggered by Bootstrap 5's
+   data-bs-theme attribute Docassemble sets when its dark mode is on
+   (which is what Smart-Docx's dark-mode toggle propagates into the
+   iframe). */
+[data-bs-theme="dark"] {
+  --sd-primary: #6BA8DD;
+  --sd-primary-hover: #8FBCE5;
+  --sd-accent: #4F92C8;
+  --sd-active-bg: rgba(79, 146, 200, 0.22);
+  --sd-rail-bg: #1E293B;
+  --sd-pane-bg: #0F172A;
+  --sd-page-bg: #0B1220;
+  --sd-border: #334155;
+  --sd-text: #F1F5F9;
+  --sd-muted: #94A3B8;
+  --sd-tick: #4ADE80;
+  --sd-progress: #4ADE80;
+  --sd-input-bg: #1E293B;
+  --sd-input-text: #F1F5F9;
+  --sd-button-secondary-bg: #1E293B;
 }
 
 /* Hide Docassemble's top nav — the interview is iframed inside Smart-
-   Docx's own chrome, so its navbar would just duplicate. (Pre-existing
-   behaviour, kept here so the file is self-contained.) */
+   Docx's own chrome, so its navbar would just duplicate. */
 .navbar {
   display: none;
 }
@@ -64,8 +91,6 @@ body {
 /* ─── Section navigation rail (left) ─────────────────────────────── */
 
 div.danavdiv {
-  /* Docassemble's default 30px top margin sits the rail awkwardly; HotDocs
-     starts the outline flush against the document title bar. */
   margin-top: 0;
   padding: 16px 0;
   background: var(--sd-rail-bg);
@@ -95,10 +120,8 @@ div.dasections .btn {
   white-space: normal;
 }
 
-/* Tick mark before clickable sections (proxy for "in the user's outline,
-   reachable by click"). Matches HotDocs' green-circle check. We use a
-   pseudo-element so we don't need extra HTML; ::before sits in the
-   28px left padding reserved by .btn. */
+/* Tick mark before clickable sections (proxy for "in the user's
+   outline, reachable by click"). Mirrors HotDocs' green-circle check. */
 div.dasections a.btn.daclickable::before {
   content: "✓";
   position: absolute;
@@ -118,27 +141,31 @@ div.dasections a.btn.daclickable::before {
   line-height: 1;
 }
 
+div.dasections a.btn.daclickable {
+  color: var(--sd-text);
+}
+
 div.dasections a.btn.daclickable:hover {
-  background: rgba(0, 87, 139, 0.06);
+  background: var(--sd-active-bg);
   color: var(--sd-primary);
   text-decoration: none;
 }
 
-/* Active (currently-displayed) section. Docassemble adds .daactive to
-   the matching button. Override the default yellow in app.css with a
-   HotDocs-style pale-blue fill + left accent bar. */
+/* Active section — pale-blue fill + left accent bar. Override Docassemble's
+   default yellow `.daactive` (and the bright Bootstrap btn-primary blue
+   that hits when the active item is rendered as a primary button). */
 div.dasections .btn.daactive,
-div.dasections .daactive {
+div.dasections .daactive,
+div.dasections .btn.btn-primary,
+div.dasections .btn.btn-primary.daactive {
   background: var(--sd-active-bg) !important;
   color: var(--sd-primary) !important;
   font-weight: 600;
   border-left: 3px solid var(--sd-primary);
 }
 
-/* Sub-items (DAList children inside .dainlineinside) get an extra indent
-   so they read as a hierarchy. Already present in this interview's
-   sections list as none, but kept for templates that add DAList nesting
-   later. */
+/* Sub-items (DAList children inside .dainlineinside) get an extra
+   indent so they read as a hierarchy. */
 div.dasections div.dainlineinside .btn {
   padding-left: 48px;
   font-size: 13px;
@@ -158,11 +185,10 @@ div.dasections div.dainlineinside a.btn.daclickable::before {
 #dadiv,
 .daquestion {
   background: var(--sd-pane-bg);
+  color: var(--sd-text);
   padding: 0;
 }
 
-/* Section title — Docassemble emits the question's section name above
-   the question text. Style as HotDocs' top blue-grey bar. */
 .dasectionheading,
 h1.daquestionheading {
   background: var(--sd-active-bg);
@@ -174,7 +200,6 @@ h1.daquestionheading {
   border-bottom: 1px solid var(--sd-border);
 }
 
-/* Form fields — generous padding, slightly larger inputs. */
 .daquestion .form-control,
 .daquestion input[type="text"],
 .daquestion input[type="email"],
@@ -182,6 +207,8 @@ h1.daquestionheading {
 .daquestion input[type="date"],
 .daquestion select,
 .daquestion textarea {
+  background: var(--sd-input-bg);
+  color: var(--sd-input-text);
   border: 1px solid var(--sd-border);
   border-radius: 4px;
   padding: 8px 12px;
@@ -194,7 +221,7 @@ h1.daquestionheading {
 .daquestion select:focus,
 .daquestion textarea:focus {
   border-color: var(--sd-primary);
-  box-shadow: 0 0 0 3px rgba(0, 87, 139, 0.12);
+  box-shadow: 0 0 0 3px rgba(0, 87, 139, 0.18);
   outline: none;
 }
 
@@ -226,7 +253,7 @@ h1.daquestionheading {
 
 .daquestion .btn-secondary,
 .daquestion .btn-da-secondary {
-  background: #ffffff;
+  background: var(--sd-button-secondary-bg);
   border: 1px solid var(--sd-border);
   color: var(--sd-text);
   font-weight: 500;
@@ -235,12 +262,12 @@ h1.daquestionheading {
 }
 
 .daquestion .btn-secondary:hover {
-  background: var(--sd-rail-bg);
+  background: var(--sd-active-bg);
   border-color: var(--sd-accent);
   color: var(--sd-primary);
 }
 
-/* ─── Progress bar (HotDocs thin green stripe at the bottom) ────── */
+/* ─── Progress bar (thin green stripe at the bottom) ────────────── */
 
 div.daprogress .progress {
   height: 4px;
@@ -269,22 +296,16 @@ div.daprogress .progress-bar {
 
 /* ─── Desktop: HotDocs-compact density (≥ lg) ─────────────────────
  * HotDocs is noticeably denser than Bootstrap's defaults — labels
- * ~12px, inputs ~13px with ~5px padding, buttons ~13px. We hold the
- * comfortable Material-style density on phones (mobile-first
- * constraint) and shrink everything one notch up at the lg breakpoint
- * where the user is on a real keyboard/mouse and screen real estate
- * is at a premium. Mirrors Bootstrap's `.btn-sm` / `.form-control-sm`
- * scale.
+ * ~12px, inputs ~13px with ~5px padding, buttons ~13px. We hold
+ * comfortable Material-style density on phones (mobile-first) and
+ * shrink everything one notch up at the lg breakpoint where the user
+ * is on a real keyboard/mouse and screen real estate is at a premium.
+ * Mirrors Bootstrap's `.btn-sm` / `.form-control-sm` scale.
  * ───────────────────────────────────────────────────────────────── */
 
 @media (min-width: 992px) {
-  /* Section nav rail — tighter rows, smaller font */
-  div.danavdiv {
-    padding: 10px 0;
-  }
-  div.dasections {
-    line-height: 1.35;
-  }
+  div.danavdiv { padding: 10px 0; }
+  div.dasections { line-height: 1.35; }
   div.dasections .btn {
     padding: 7px 14px 7px 26px;
     font-size: 13px;
@@ -306,7 +327,6 @@ div.daprogress .progress-bar {
     font-size: 9px;
   }
 
-  /* Question pane — denser title bar + form */
   .dasectionheading,
   h1.daquestionheading {
     padding: 10px 20px;
@@ -323,19 +343,16 @@ div.daprogress .progress-bar {
   .daquestion textarea {
     padding: 4px 8px;
     font-size: 13px;
-    height: calc(1.5em + 0.5rem + 2px); /* matches Bootstrap's form-control-sm */
+    height: calc(1.5em + 0.5rem + 2px);
   }
 
-  .daquestion textarea {
-    height: auto;
-  }
+  .daquestion textarea { height: auto; }
 
   .daquestion label {
     margin-bottom: 4px;
     font-size: 12px;
   }
 
-  /* Action buttons — Bootstrap btn-sm scale */
   .danavlinkbuttons,
   .daquestion .btn-da-primary,
   .daquestion .btn-primary,
@@ -346,8 +363,5 @@ div.daprogress .progress-bar {
     line-height: 1.5;
   }
 
-  /* Progress bar — slightly thinner */
-  div.daprogress .progress {
-    height: 3px;
-  }
+  div.daprogress .progress { height: 3px; }
 }
