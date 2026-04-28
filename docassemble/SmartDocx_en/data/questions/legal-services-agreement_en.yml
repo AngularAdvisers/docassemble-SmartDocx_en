@@ -310,6 +310,23 @@ subquestion: |
 # the Smart-Docx preview dialog to open before the assembled DOCX was
 # readable via /api/file — the root cause of the "no preview" bug.
 ---
+# Letterhead marker variables. The DOCX template has `{{firm_letterhead}}`
+# and `{{firm_letterhead_footer}}` Jinja markers in its header2/footer2,
+# so docassemble's docxtpl pass tries to resolve those names against the
+# interview context. Without these definitions, assembly fails with:
+#
+#   "There was a reference to a variable 'firm_letterhead' that could
+#    not be looked up in the question file"
+#
+# Defining them as the literal Jinja-template strings is deliberate:
+# docxtpl substitutes the value (`{{firm_letterhead}}`) back into the
+# header/footer as text, preserving the marker in the assembled DOCX
+# for Smart-Docx's letterhead-merge post-processor to swap with the
+# firm's real header/footer at delivery time.
+code: |
+  firm_letterhead = '{{firm_letterhead}}'
+  firm_letterhead_footer = '{{firm_letterhead_footer}}'
+---
 # The attachment MUST be in its own top-level block (separated by ---)
 # rather than folded into the mandatory:True completion question above.
 #
