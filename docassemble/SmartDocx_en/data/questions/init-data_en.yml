@@ -571,20 +571,37 @@ default screen parts:
         div.daprogress .progress { height: 3px; }
       }
     </style>
+    <%
+      # Render the current interview session id so client JS can read
+      # it without depending on `?session=` being present in the URL.
+      # DA's playground "Run" launches the interview at /interview?i=...
+      # WITHOUT a session= param (the session lives in the Flask
+      # cookie), so URL-based extraction returns null in the Sandbox
+      # path — breaking the postMessage that drives Smart-Docx's
+      # auto letterhead-merge. Server-side render is the only reliable
+      # source.
+      from docassemble.base.functions import this_thread
+      _smartdocx_session = (this_thread.current_info or {}).get('session', '') if hasattr(this_thread, 'current_info') else ''
+    %>
     <script>
+      window.__daSessionId = "${ _smartdocx_session }";
+
       function smartDocxSaveAndExit(btn) {
         if (btn) {
           btn.disabled = true;
           btn.innerText = 'Saving...';
         }
         if (window.parent && window.parent !== window) {
-          // Read the current session id from the iframe's URL, not from
-          // whatever Smart-Docx remembered when it opened us. DA can mint
-          // a fresh session mid-flight (e.g. when the original is GC'd or
-          // its YAML changed), and the parent must use *that* id for the
-          // attach-to-matter mutation — otherwise the backend hits 400 on
-          // GET /api/session?session=<dead id>.
-          var sessionId = new URLSearchParams(window.location.search).get('session') || '';
+          // Resolve sessionId in priority order:
+          //   1. `?session=` query param (matters/normal flows)
+          //   2. server-rendered `window.__daSessionId` (playground/
+          //      sandbox flows where DA tracks session in the cookie
+          //      and never puts it in the URL — see Mako block above)
+          //   3. empty string (parent reports "no session", graceful)
+          var sessionId =
+            new URLSearchParams(window.location.search).get('session') ||
+            window.__daSessionId ||
+            '';
           window.parent.postMessage(
             { type: 'docassemble:complete', sessionId: sessionId },
             '*'
